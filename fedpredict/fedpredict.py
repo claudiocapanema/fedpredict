@@ -678,20 +678,91 @@ def per(first_round, parameters):
 
 # FedPredict client
 
-def fedpredict_client(local_model, global_parameters, filename, t, T, nt, M, config={}, mode=None, decompress=False,
-                      local_client_information={}, current_proportion=None, dynamic=False):
+def fedpredict_client_weight_prediction(output: torch.Tensor, t: int, current_proportion: np.array, s: float, framework='torch') -> np.array:
+    """
+        This function gives more weight to the predominant classes in the current dataset. This function is part of
+        FedPredict-Dynamic
+    Args:
+        output: torch.Tensor, required
+            The output of the model after applying 'softmax' activation function.
+        t: int, required
+            The current server round
+        current_proportion:  np.array, required
+            The classes proportion in the current training data
+        s: float, required
+            The similarity between the previous and current dataset. Note that s \in [0, 1]
+        framework: str, optional. Default='torch'
+
+    Returns:
+        np.array containing the weighted predictions
+
+    """
+
+    try:
+        if s != 1 and t > 10:
+            if framework == 'torch':
+                output = torch.multiply(output, torch.from_numpy(current_proportion * (1 - s)))
+            else:
+                raise ValueError('Framework not found')
+
+        return output
+
+    except Exception as e:
+        print("FedPredict client weight prediction")
+        print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
+
+def fedpredict_client(local_model: torch.nn.Module, global_parameters: list[np.array],
+                      current_proportion: list[float], t: int, T: int, nt: int, M: list,
+                      local_client_information: dict, filename: str='', knowledge_distillation=False,
+                      decompress=False, dynamic=False) -> torch.nn.Module:
+    """
+        FedPredict v.1 presented in https://ieeexplore.ieee.org/abstract/document/10257293
+        This method combines global and local parameters, providing both generalization and personalization.
+        It also prevents drop in the accuracy when new/untrained clients are evaluated
+
+        FedPredict v.3 (FedPredict-Dynamic)
+        This method combines global and local parameters, providing both generalization and personalization.
+        Differently from v.1, it takes into account the similarity between last and current dataset to weight the
+        combination and provide support for heterogeneous and non-stationary/dynamic data.
+        It also prevents drop in the accuracy when new/untrained clients are evaluated
+       Args:
+           local_model: torch.nn.Module, required
+           global_parameters: list[np.array], required
+           current_proportion: list[float], required
+           t: int, required
+           T: int, required
+           nt: int, required
+           M: list, required
+           local_client_information: dict, required
+           filename: str, optional. Default=''
+           knowledge_distillation: bool, optional. Default=False
+               If the model has knowledge distillation, then set True, to indicate that the global model parameters have
+               to be combined with the student model
+           decompress: bool, optional. Default=False
+               Whether or not to decompress global model parameters in case a previous compression was applied. Only set
+               True if using "FedPredict_server" and compressing the shared parameters.
+            dynamic: bool, optional. Default=False
+                If True, it uses the FedPredict dynamic. If False, it uses the traditional FedPredict.
+
+       Returns: torch.nn.Module
+           The combined model
+
+       """
+
     try:
 
         if not dynamic:
 
             return fedpredict_client_traditional(local_model=local_model, global_parameters=global_parameters, t=t, T=T,
-                                                 nt=nt, M=M, filename=filename, config=config, mode=mode)
+                                                 nt=nt, M=M, filename=filename,
+                                                 knowledge_distillation=knowledge_distillation, decompress=decompress)
 
         else:
 
-            return fedpredict_dynamic_client(local_model=local_model, global_parameters=global_parameters, current_proportion=current_proportion,
-                                             local_client_information=local_client_information, t=t, T=T, nt=nt, M=M,
-                                             filename=filename, config=config, knowledge_distillation=mode)
+            return fedpredict_dynamic_client(local_model=local_model, global_parameters=global_parameters,
+                                             current_proportion=current_proportion,
+                                             t=t, T=T, nt=nt, M=M, local_client_information=local_client_information,
+                                             filename=filename,  knowledge_distillation=knowledge_distillation)
 
     except Exception as e:
         print("FedPredict client")
@@ -718,7 +789,8 @@ def fedpredict_client_traditional(local_model: torch.nn.Module, global_parameter
                 If the model has knowledge distillation, then set True, to indicate that the global model parameters have
                 to be combined with the student model
             decompress: bool, optional. Default=False
-                Whether or not to decompress global model parameters in case a previous compression was applied
+               Whether or not to decompress global model parameters in case a previous compression was applied. Only set
+               True if using "FedPredict_server" and compressing the shared parameters.
 
         Returns: torch.nn.Module
             The combined model
@@ -726,7 +798,7 @@ def fedpredict_client_traditional(local_model: torch.nn.Module, global_parameter
         """
     # Using 'torch.load'
     try:
-        if knowledge_distillation == "kd":
+        if knowledge_distillation:
             model_shape = [i.detach().cpu().numpy().shape for i in local_model.student.parameters()]
         else:
             model_shape = [i.detach().cpu().numpy().shape for i in local_model.parameters()]
@@ -782,7 +854,8 @@ def fedpredict_dynamic_client(local_model: torch.nn.Module, global_parameters: l
             If the model has knowledge distillation, then set True, to indicate that the global model parameters have
             to be combined with the student model
         decompress: bool, optional. Default=False
-            Whether or not to decompress global model parameters in case a previous compression was applied
+           Whether or not to decompress global model parameters in case a previous compression was applied. Only set
+               True if using "FedPredict_server" and compressing the shared parameters.
 
     Returns: torch.nn.Module
         The combined model
@@ -791,7 +864,7 @@ def fedpredict_dynamic_client(local_model: torch.nn.Module, global_parameters: l
     # Using 'torch.load'
     try:
 
-        if knowledge_distillation == "kd":
+        if knowledge_distillation:
             model_shape = [i.detach().cpu().numpy().shape for i in local_model.student.parameters()]
         else:
             model_shape = [i.detach().cpu().numpy().shape for i in local_model.parameters()]
