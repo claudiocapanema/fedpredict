@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='fedpredict',
-    version='0.0.2',
+    version='0.0.3',
     packages=['fedpredict', 'fedpredict.utils', 'fedpredict.utils.compression_methods'],
     url='https://github.com/claudiocapanema/fedpredict',
     license='',
