@@ -1,7 +1,7 @@
 
 # FedPredict
 
-FedPredict is a Federated Learning (FL) plugin that can significantly improve FL solutions without requiring additional training or expensive processing. It is also a modular plugin that operates in the prediction stage of FL without requiring any modification in the training step. 
+FedPredict is a Federated Learning (FL) plugin that can significantly improve FL solutions without requiring additional training or expensive processing. FedPredict enanles personalization for tradditional methods, such as FedAvg and FedYogi. It is also a modular plugin that operates in the prediction stage of FL without requiring any modification in the training step. 
 This project has been developed in the laboratories WISEMAP (UFMG) and H.IAAC (UNICAMP).
 
 ## Benefits and use cases
