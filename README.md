@@ -32,7 +32,7 @@ FedPredict-Client is placed on the client-side and the features of its versions 
 
 | Module | Static clients | Dynamic clients | Static heterogeneous data | Dynamic heterogeneous data | 
 | :---         |     :---:      |     :---:     |    :---:   |  :--------------:|
-|    FedPredict Client v.1  |    :heavy_check_mark:   |    -   |    -   |   :heavy_check_mark:    |
+|    FedPredict Client v.1  |    :heavy_check_mark:   |    :heavy_check_mark:   |    -   |   :heavy_check_mark:    |
 
 FedPredict-Server is placed on the server-side and is responsible for compressing the shared global model parameters.
 
