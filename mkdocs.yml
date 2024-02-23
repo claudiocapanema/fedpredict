@@ -1,5 +1,5 @@
 site_name: FedPredict
-site_url: https://fedpredict.com/
+site_url: https://www.fedpredict.com/
 nav:
   - Home: index.md
   - About: about.md
