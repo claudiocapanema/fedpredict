@@ -1,56 +1,20 @@
-# Pereat deus
+# About
 
-## Non referam nitor sculpsit
+FedPredict is an open-source project freely available on [Github](https://github.com/claudiocapanema/fedpredict) under the BSD-3 license.
+This project has been developed in the laboratories WISEMAP (UFMG) and H.IAAC (UNICAMP).
 
-Lorem markdownum, domos dictos, arduus, glaebis metu? Telephus sed occiderat
-venti tener moenia, tum dilectos male spatiis sagittifera hunc corpora nemo,
-quid. Nervo tabellis, hastae saevit promissa probetne.
+## Citing
 
-- Medusae terras inquit
-- Quid ferrugine figuram
-- Super isto
-- Haud sacer corpora longo
-- Causa ultima haec est accessit frondere
-- Genitor clamor mandere magnosque te orbem necem
+If FedPredict has been useful to you, please cite our [paper](https://ieeexplore.ieee.org/abstract/document/10257293). The BibTeX is presented as follows:
 
-Sonum quam Nox est tibi iniecique pugnat et omnes velatam: haec. Priamum miseram
-quotiens si faveas regnumque longa aurora: tumidus sanguine *relicta* tunc
-duxque?
-
-## Haec tenes petiit indignatur inulta anxia factaque
-
-Variat violas, promptu pressos coniuge armigerae luctataque utque,
-[posse](http://nisi-saevarum.org/) evulsum; saxum. Labor et silvani sucis tu
-cutem possidet, parentum nempe volucrum armatur *dominoque*; tonarent. Ossa
-caelestique Tydides quae tenes lapsa, consilium rex nec via praestantia sine
-foret vestros. In tibi Fortuna acies et levior, et exilium, crimina
-tendentemque!
-
-- Simul recenti sua ramos dicitur bisque
-- Sum vertitur adsensere ab pendens neque multis
-- Mille in dilexit datis Aegides
-
-## Mensae illo Aeacus
-
-Nisi alis Phantasos repetitaque crura umeroque se fugit alimenta, sic [Aeacon
-cacumine inmissa](http://illisquercus.io/) fitque, qua quae nec, primo. Nam
-profeci Cycnus hostisque auctorem est non quae, tecum inferre, inmissa **summas
-iuvenis Persei** caelo; non. Longas nec Eous abest potest, mundi mitia motatque
-adhibent, et similem caestibus.
-
-- Tempora Ausoniae populi pereat
-- Numerabilis ille ecquid gravis
-- Quod meo Numici Ulixem fragilesque vocat
-- Post molles Mopsum negat
-
-**Volet sed** ut, et validos quoque crimina cupressus e increpor. Verba si in
-manu ille, **quis inprobe sibi** nos sumitur Macareus, illa fuerit pontum
-*invidit* regia per.
-
-Ignes parte; haec lumina tamen simulaverat torrentem virgam operum onerataque
-causae, quam fertur vidi, quos. Optima in est gelidas nihil dimovit Theseu ter,
-est restitit! Stridore praevisos regionibus, fertur proceresque solet, non **si
-non** iubemur duas. Quamvis invictos nisi: verba suas annos natura, non
-[pater](http://tellusque.com/et)? Equidem oracula, et
-[sanguine](http://tamenpetit.io/), in in visa visum **et factis sola** siqua
-invitaque beati mediocris quaeritis tectus contigit.
+```
+@inproceedings{capanema2023fedpredict,
+  title={FedPredict: Combining Global and Local Parameters in the Prediction Step of Federated Learning},
+  author={Capanema, Cl{\'a}udio GS and de Souza, Allan M and Silva, Fabr{\'\i}cio A and Villas, Leandro A and Loureiro, Antonio AF},
+  booktitle={2023 19th International Conference on Distributed Computing in Smart Systems and the Internet of Things (DCOSS-IoT)},
+  pages={17--24},
+  year={2023},
+  doi={https://doi.org/10.1109/DCOSS-IoT58021.2023.00012},
+  organization={IEEE}
+}
+```

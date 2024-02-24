@@ -1,7 +1,9 @@
 
 # FedPredict
 
-FedPredict is a Federated Learning (FL) plugin that can significantly improve FL solutions without requiring additional training or expensive processing. FedPredict enanles personalization for tradditional methods, such as FedAvg and FedYogi. It is also a modular plugin that operates in the prediction stage of FL without requiring any modification in the training step. 
+FedPredict is a Federated Learning (FL) plugin that can significantly improve FL solutions without requiring additional training or expensive processing. 
+FedPredict enanles personalization for tradditional methods, such as FedAvg and FedYogi. 
+It is also a modular plugin that operates in the prediction stage of FL without requiring any modification in the training step. 
 This project has been developed in the laboratories WISEMAP (UFMG) and H.IAAC (UNICAMP).
 
 ## Benefits and use cases
@@ -26,13 +28,13 @@ Are you interested in improving your Federated Learning solution with FedPredict
 2. **Same model structure**. The layers of the global and local models have to have the same shape to allow the combination of parameters.
 3.  **Predicting using the combined model**. On the client side, the original method has to be flexible enough to make predictions based on the combined model; otherwise, the plugin will have no effect.
 
-## Versions
+## Components
 
 FedPredict-Client is placed on the client-side and the features of its versions are listed below:
 
-| Module | Static clients | Dynamic clients | Static heterogeneous data | Dynamic heterogeneous data | 
-| :---         |     :---:      |     :---:     |    :---:   |  :--------------:|
-|    FedPredict Client v.1  |    :heavy_check_mark:   |    :heavy_check_mark:   |    -   |   :heavy_check_mark:    |
+| Module               | Static clients | Dynamic clients | Static heterogeneous data | Dynamic heterogeneous data | 
+|:---------------------|     :---:      |     :---:     |:-------------------------:|:--------------------------:|
+| FedPredict Client    |    :heavy_check_mark:   |    :heavy_check_mark:   |             :heavy_check_mark:              |             -              |
 
 FedPredict-Server is placed on the server-side and is responsible for compressing the shared global model parameters.
 
