@@ -2,4 +2,5 @@ site_name: FedPredict
 site_url: https://www.fedpredict.com/
 nav:
   - Home: index.md
+  - Quick start: quick_start.md
   - About: about.md
