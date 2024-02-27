@@ -688,7 +688,7 @@ def per(first_round, parameters):
 
 # FedPredict client
 
-def fedpredict_client_weight_prediction(output: torch.Tensor, t: int, current_proportion: np.array, s: float, framework='torch') -> np.array:
+def fedpredict_client_weight_predictions(output: torch.Tensor, t: int, current_proportion: np.array, s: float, framework='torch') -> np.array:
     """
         This function gives more weight to the predominant classes in the current dataset. This function is part of
         FedPredict-Dynamic
@@ -763,23 +763,23 @@ def fedpredict_client(local_model: torch.nn.Module, global_parameters: NDArrays,
 
         if not dynamic:
 
-            return fedpredict_client_traditional(local_model=local_model, global_parameters=global_parameters, t=t, T=T,
+            return fedpredict_client_traditional(local_model=local_model, global_model_parameters=global_parameters, t=t, T=T,
                                                  nt=nt, M=M, filename=filename,
                                                  knowledge_distillation=knowledge_distillation, decompress=decompress)
 
         else:
 
-            return fedpredict_dynamic_client(local_model=local_model, global_parameters=global_parameters,
+            return fedpredict_client_dynamic(local_model=local_model, global_model_parameters=global_parameters,
                                              current_proportion=current_proportion,
                                              t=t, T=T, nt=nt, M=M, local_client_information=local_client_information,
-                                             filename=filename,  knowledge_distillation=knowledge_distillation)
+                                             filename=filename, knowledge_distillation=knowledge_distillation)
 
     except Exception as e:
         print("FedPredict client")
         print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
 
 
-def fedpredict_client_traditional(local_model: torch.nn.Module, global_parameters: NDArrays,
+def fedpredict_client_traditional(local_model: torch.nn.Module, global_model_parameters: NDArrays,
                                   t: int, T: int, nt: int, M: List,
                                   filename: str='', knowledge_distillation=False,
                                   decompress=False) -> torch.nn.Module:
@@ -789,7 +789,7 @@ def fedpredict_client_traditional(local_model: torch.nn.Module, global_parameter
         It also prevents drop in the accuracy when new/untrained clients are evaluated
         Args:
             local_model: torch.nn.Module, required
-            global_parameters: list[np.array], required
+            global_model_parameters: list[np.array], required
             t: int, required
             T: int, required
             nt: int, required
@@ -813,28 +813,28 @@ def fedpredict_client_traditional(local_model: torch.nn.Module, global_parameter
         else:
             model_shape = [i.detach().cpu().numpy().shape for i in local_model.parameters()]
         print("comprimido: ", len(model_shape))
-        global_parameters = decompress_global_parameters(global_parameters, model_shape, M, decompress)
+        global_model_parameters = decompress_global_parameters(global_model_parameters, model_shape, M, decompress)
         print("shape modelo: ", model_shape)
-        print("descomprimido: ", [i.shape for i in global_parameters])
+        print("descomprimido: ", [i.shape for i in global_model_parameters])
         print("M: ", M)
         # parameters = [Parameter(torch.Tensor(i.tolist())) for i in global_parameters]
 
-        if len(global_parameters) != len(M):
-            print("diferente", len(global_parameters), len(M))
+        if len(global_model_parameters) != len(M):
+            print("diferente", len(global_model_parameters), len(M))
             raise Exception("Lenght of parameters is different from M")
 
         if os.path.exists(filename):
             # Load local parameters to 'self.model'
             print("existe modelo local")
             local_model.load_state_dict(torch.load(filename))
-            local_model = fedpredict_combine_models(global_parameters, local_model, t, T, nt, M)
+            local_model = fedpredict_combine_models(global_model_parameters, local_model, t, T, nt, M)
         else:
             if not knowledge_distillation:
-                for old_param, new_param in zip(local_model.parameters(), global_parameters):
+                for old_param, new_param in zip(local_model.parameters(), global_model_parameters):
                     old_param.data = new_param.data.clone()
             else:
                 local_model.new_client = True
-                for old_param, new_param in zip(local_model.student.parameters(), global_parameters):
+                for old_param, new_param in zip(local_model.student.parameters(), global_model_parameters):
                     old_param.data = new_param.data.clone()
 
         return local_model
@@ -844,7 +844,7 @@ def fedpredict_client_traditional(local_model: torch.nn.Module, global_parameter
         print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
 
 
-def fedpredict_dynamic_client(local_model: torch.nn.Module, global_parameters: NDArrays,
+def fedpredict_client_dynamic(local_model: torch.nn.Module, global_model_parameters: NDArrays,
                               current_proportion: List[float], t: int, T: int, nt: int, M:List,
                               local_client_information: Dict, filename: str='', knowledge_distillation=False,
                               decompress=False) -> torch.nn.Module:
@@ -852,7 +852,7 @@ def fedpredict_dynamic_client(local_model: torch.nn.Module, global_parameters: N
 
     Args:
         local_model: torch.nn.Module, required
-        global_parameters: list[np.array], required
+        global_model_parameters: list[np.array], required
         current_proportion: list[float], required
         t: int, required
         T: int, required
@@ -878,9 +878,9 @@ def fedpredict_dynamic_client(local_model: torch.nn.Module, global_parameters: N
             model_shape = [i.detach().cpu().numpy().shape for i in local_model.student.parameters()]
         else:
             model_shape = [i.detach().cpu().numpy().shape for i in local_model.parameters()]
-        global_parameters = decompress_global_parameters(global_parameters, model_shape, M, decompress)
+        global_model_parameters = decompress_global_parameters(global_model_parameters, model_shape, M, decompress)
 
-        if len(global_parameters) != len(M):
+        if len(global_model_parameters) != len(M):
             # print("diferente", len(parameters), len(M))
             raise Exception("Lenght of parameters is different from M")
 
@@ -888,16 +888,16 @@ def fedpredict_dynamic_client(local_model: torch.nn.Module, global_parameters: N
             # Load local parameters to 'self.model'
             # print("existe modelo local")
             local_model.load_state_dict(torch.load(filename))
-            local_model = fedpredict_dynamic_combine_models(global_parameters, local_model, t, T, nt, M,
+            local_model = fedpredict_dynamic_combine_models(global_model_parameters, local_model, t, T, nt, M,
                                                             local_client_information, current_proportion)
         else:
             # print("usar modelo global: ", cid)
             if knowledge_distillation is None:
-                for old_param, new_param in zip(local_model.parameters(), global_parameters):
+                for old_param, new_param in zip(local_model.parameters(), global_model_parameters):
                     old_param.data = new_param.data.clone()
             else:
                 local_model.new_client = True
-                for old_param, new_param in zip(local_model.student.parameters(), global_parameters):
+                for old_param, new_param in zip(local_model.student.parameters(), global_model_parameters):
                     old_param.data = new_param.data.clone()
 
         return local_model
@@ -907,14 +907,14 @@ def fedpredict_dynamic_client(local_model: torch.nn.Module, global_parameters: N
         print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
 
 
-def decompress_global_parameters(compressed_global_model_gradients, model_shape, M, decompress):
+def decompress_global_parameters(compressed_global_model_parameters, model_shape, M, decompress):
     try:
-        if decompress and len(compressed_global_model_gradients) > 0:
-            decompressed_gradients = inverse_parameter_svd_reading(compressed_global_model_gradients, model_shape,
+        if decompress and len(compressed_global_model_parameters) > 0:
+            decompressed_gradients = inverse_parameter_svd_reading(compressed_global_model_parameters, model_shape,
                                                                    len(M))
             parameters = [torch.Tensor(i.tolist()) for i in decompressed_gradients]
         else:
-            parameters = [torch.Tensor(i.tolist()) for i in compressed_global_model_gradients]
+            parameters = [torch.Tensor(i.tolist()) for i in compressed_global_model_parameters]
 
         return parameters
 
