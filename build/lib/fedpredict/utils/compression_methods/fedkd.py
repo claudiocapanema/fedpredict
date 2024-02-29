@@ -1,5 +1,5 @@
 import sys
-from utils.compression_methods.parameters_svd import parameter_svd_write, inverse_parameter_svd_reading, if_reduces_size
+from .utils.compression_methods.parameters_svd import parameter_svd_write, inverse_parameter_svd_reading, if_reduces_size
 import numpy as np
 
 def fedkd_compression_core(parameters, energy):

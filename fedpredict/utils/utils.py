@@ -2,15 +2,12 @@ import sys
 import copy
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity, euclidean_distances
-from utils.compression_methods.parameters_svd import parameter_svd_write, inverse_parameter_svd_reading, if_reduces_size
-from utils.compression_methods.sparsification import client_model_non_zero_indexes, client_specific_top_k_parameters
-from utils.compression_methods.sparsification import sparse_crs_top_k, to_dense, sparse_matrix, get_not_zero_values
-from utils.compression_methods.fedkd import fedkd_compression
+from fedpredict.utils.compression_methods.parameters_svd import parameter_svd_write, inverse_parameter_svd_reading, if_reduces_size
+from fedpredict.utils.compression_methods.sparsification import client_model_non_zero_indexes, client_specific_top_k_parameters
+from fedpredict.utils.compression_methods.sparsification import sparse_crs_top_k, to_dense, sparse_matrix, get_not_zero_values
+from fedpredict.utils.compression_methods.fedkd import fedkd_compression
 import os
 from scipy.stats import entropy
-import scipy.stats as st
-# from torch_cka import CKA
-import pandas as pd
 
 import math
 import torch

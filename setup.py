@@ -9,7 +9,8 @@ with codecs.open(os.path.join(here, "README.md"), encoding="utf-8") as fh:
 
 setup(
     name='fedpredict',
-    version='{{VERSION_PLACEHOLDER}}',
+    # version='{{VERSION_PLACEHOLDER}}',
+    version='0.0.0.1',
     packages=['fedpredict', 'fedpredict.utils', 'fedpredict.utils.compression_methods'],
     url='https://github.com/claudiocapanema/fedpredict',
     license='',
