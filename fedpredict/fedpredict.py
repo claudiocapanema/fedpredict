@@ -9,18 +9,16 @@ import os
 import math
 import torch
 
-from flwr.common import (
-    EvaluateIns,
-    EvaluateRes,
-    FitIns,
-    FitRes,
-    MetricsAggregationFn,
-    NDArrays,
-    Parameters,
-    Scalar,
-    ndarrays_to_parameters,
-    parameters_to_ndarrays,
-)
+try:
+    import flwr
+    from flwr.common import (
+        EvaluateIns,
+        ndarrays_to_parameters,
+    )
+except ImportError:
+    _has_flwr = False
+else:
+    _has_flwr = True
 
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
@@ -88,14 +86,14 @@ def fedpredict_core(t, T, nt):
         else:
             update_level = 1 / nt
             evolution_level = t / T
-            eq1 = (-update_level - evolution_level)  # v1 pior
+            eq1 = (-update_level - evolution_level)
             eq2 = round(np.exp(eq1), 6)
             global_model_weight = eq2
 
         local_model_weights = 1 - global_model_weight
 
-        print("rodada: ", t, " rounds sem fit: ", nt, "\npeso global: ", global_model_weight, " peso local: ",
-              local_model_weights)
+        # print("rodada: ", t, " rounds sem fit: ", nt, "\npeso global: ", global_model_weight, " peso local: ",
+        #       local_model_weights)
 
         return local_model_weights, global_model_weight
 
@@ -372,7 +370,7 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], f
             Layers' similarity difference. It is used when compression_method uses the "dls" technique.
         model_shape: list, optional
         compression_method: None, 'dls_compredict', 'dls', 'compredict', 'sparsification', 'fedkd', 'fedper'. Default=None
-        fl_framework: None, 'flower'. Default='flower'
+        fl_framework: None, 'flwr'. Default='flwr'
             Method for compressing the global model parameters before sending to thee clients
 
     Returns: list[tuple]
@@ -416,9 +414,13 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], f
                 if fl_framework is None:
                     config['parameters'] = np.array([])
                     client_evaluate_list_fedpredict.append((client, config))
-                elif fl_framework == 'flower':
-                    evaluate_ins = EvaluateIns(ndarrays_to_parameters(np.array([])), config)
-                    client_evaluate_list_fedpredict.append((client, evaluate_ins))
+                elif fl_framework == 'flwr':
+                    if _has_flwr:
+                        evaluate_ins = EvaluateIns(ndarrays_to_parameters(np.array([])), config)
+                        client_evaluate_list_fedpredict.append((client, evaluate_ins))
+                    else:
+                        raise ImportError(
+                            "Flower is required. Digit: 'pip install fedpredict[flwr]' or 'pip install fedpredict[full]'")
                 continue
             elif compression_method == 'fedkd':
                 if fedkd is None:
@@ -436,9 +438,13 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], f
                 if fl_framework is None:
                     config['parameters'] = parameters_to_send
                     client_evaluate_list_fedpredict.append((client, config))
-                else:
-                    evaluate_ins = EvaluateIns(ndarrays_to_parameters(parameters_to_send), config)
-                    client_evaluate_list_fedpredict.append((client, evaluate_ins))
+                elif fl_framework =='flwr':
+                    if _has_flwr:
+                        evaluate_ins = EvaluateIns(ndarrays_to_parameters(parameters_to_send), config)
+                        client_evaluate_list_fedpredict.append((client, evaluate_ins))
+                    else:
+                        raise ImportError(
+                            "Flower is required. Digit: 'pip install fedpredict[flwr]' or 'pip install fedpredict[full]'")
                 continue
             elif compression_method == 'sparsification':
                 k = 0.3
@@ -453,9 +459,13 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], f
                 if fl_framework is None:
                     config['parameters'] = parameters_to_send
                     client_evaluate_list_fedpredict.append((client, config))
-                elif fl_framework == 'flower':
-                    evaluate_ins = EvaluateIns(ndarrays_to_parameters(parameters_to_send), config)
-                    client_evaluate_list_fedpredict.append((client, evaluate_ins))
+                elif fl_framework == 'flwr':
+                    if _has_flwr:
+                        evaluate_ins = EvaluateIns(ndarrays_to_parameters(parameters_to_send), config)
+                        client_evaluate_list_fedpredict.append((client, evaluate_ins))
+                    else:
+                        raise ImportError(
+                            "Flower is required. Digit: 'pip install fedpredict[flwr]' or 'pip install fedpredict[full]'")
                 continue
 
             elif compression_method is None:
@@ -465,9 +475,13 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], f
                 if fl_framework is None:
                     config['parameters'] = parameters
                     client_evaluate_list_fedpredict.append((client, config))
-                elif fl_framework == 'flower':
-                    evaluate_ins = EvaluateIns(ndarrays_to_parameters(parameters), config)
-                    client_evaluate_list_fedpredict.append((client, evaluate_ins))
+                elif fl_framework == 'flwr':
+                    if _has_flwr:
+                        evaluate_ins = EvaluateIns(ndarrays_to_parameters(parameters), config)
+                        client_evaluate_list_fedpredict.append((client, evaluate_ins))
+                    else:
+                        raise ImportError(
+                            "Flower is required. Digit: 'pip install fedpredict[flwr]' or 'pip install fedpredict[full]'")
                 continue
 
             parameters_to_send = None
@@ -515,11 +529,12 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], f
             if fl_framework is None:
                 config['parameters'] = parameters_to_send
                 client_evaluate_list_fedpredict.append((client, config))
-            elif fl_framework == 'flower':
-                evaluate_ins = EvaluateIns(ndarrays_to_parameters(parameters_to_send), config)
-                # print("Evaluate enviar: ", client_id, [i.shape for i in parameters_to_ndarrays(parameters_to_send)])
-                # print("enviar referencia: ", len(parameters), len(parameters_to_ndarrays(parameters_to_send)))
-                client_evaluate_list_fedpredict.append((client, evaluate_ins))
+            elif fl_framework == 'flwr':
+                if _has_flwr:
+                    evaluate_ins = EvaluateIns(ndarrays_to_parameters(parameters_to_send), config)
+                    client_evaluate_list_fedpredict.append((client, evaluate_ins))
+                else:
+                    raise ImportError("Flower is required. Digit: 'pip install fedpredict[flwr]' or 'pip install fedpredict[full]'")
 
         return client_evaluate_list_fedpredict
 
@@ -619,12 +634,7 @@ def dls(first_round, parameters,
         size_list = []
         for i in range(len(parameters)):
             tamanho = get_size(parameters[i])
-            # print("inicio camada: ", i, " tamanho: ", tamanho, " shape: ", parameters[i].shape)
             size_list.append(tamanho)
-        # print("Tamanho total parametros original: ", sum(size_list), sys.getsizeof(fl.common.ndarrays_to_parameters(parameters)))
-
-        # print("quantidade de camadas: ", len(parameters), [i.shape for i in parameters], " comment: ", comment)
-        # print("layer selection evaluate: ", self.compression, self.comment)
         if first_round != -1:
             # baixo-cima
             M = fedpredict_core_layer_selection(t=server_round, T=num_rounds, nt=nt, n_layers=n_layers,
@@ -657,12 +667,7 @@ def per(first_round, parameters):
         size_list = []
         for i in range(len(parameters)):
             tamanho = get_size(parameters[i])
-            # print("inicio camada: ", i, " tamanho: ", tamanho, " shape: ", parameters[i].shape)
             size_list.append(tamanho)
-        # print("Tamanho total parametros original: ", sum(size_list), sys.getsizeof(fl.common.ndarrays_to_parameters(parameters)))
-
-        # print("quantidade de camadas: ", len(parameters), [i.shape for i in parameters], " comment: ", comment)
-        # print("layer selection evaluate: ", self.compression, self.comment)
         if first_round != -1:
             # baixo-cima
             M = [i for i in range(len(parameters))][:-2]

@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fedpredict"
+version = "0.0.4"
+authors = [
+    { name="Cláudio G. S. Capanema", email="claudiogs.capanema@gmail.com" },
+]
+description = "FedPredict is a personalization plugin for Federated Learning methods."
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers=[
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "numpy>=1.26.4",
+    "scipy>=1.12.0",
+]
+
+[project.optional-dependencies]
+torch = [
+  "torch>=2.2.0"
+]
+tf = [
+    "tensorflow>=2.12"
+]
+flwr = [
+    "flwr>=1.7.0"
+]
+full = [
+    "torch>=2.2.0",
+    "tensorflow>=2.12",
+    "flwr>=1.7.0"
+]
+
+
+[project.urls]
+homepage = "https://github.com/claudiocapanema/fedpredict"
+documentation = "https://claudiocapanema.github.io/fedpredict/"
+
+
+[tool.setuptools.packages.find]
+include = ['fedpredict', 'fedpredict.utils', 'fedpredict.utils.compression_methods']
