@@ -6,9 +6,9 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         
         
-        <link rel="canonical" href="https://www.fedpredict.com/about/">
+        <link rel="canonical" href="https://www.fedpredict.com/api_reference_torch/">
         <link rel="shortcut icon" href="../img/favicon.ico">
-        <title>About - FedPredict</title>
+        <title>Pytorch - FedPredict</title>
         <link href="../css/bootstrap.min.css" rel="stylesheet">
         <link href="../css/font-awesome.min.css" rel="stylesheet">
         <link href="../css/base.css" rel="stylesheet">
@@ -36,12 +36,12 @@
                             <li class="navitem">
                                 <a href="../quick_start/" class="nav-link">Quick start</a>
                             </li>
-                            <li class="dropdown">
+                            <li class="dropdown active">
                                 <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">API Reference <b class="caret"></b></a>
                                 <ul class="dropdown-menu">
                                     
 <li>
-    <a href="../api_reference_torch/" class="dropdown-item">Pytorch</a>
+    <a href="./" class="dropdown-item active">Pytorch</a>
 </li>
                                     
 <li>
@@ -49,8 +49,8 @@
 </li>
                                 </ul>
                             </li>
-                            <li class="navitem active">
-                                <a href="./" class="nav-link">About</a>
+                            <li class="navitem">
+                                <a href="../about/" class="nav-link">About</a>
                             </li>
                         </ul>
 
@@ -61,12 +61,12 @@
                             </a>
                         </li>
                             <li class="nav-item">
-                                <a rel="prev" href="../api_reference_tf/" class="nav-link">
+                                <a rel="prev" href="../quick_start/" class="nav-link">
                                     <i class="fa fa-arrow-left"></i> Previous
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a rel="next" class="nav-link disabled">
+                                <a rel="next" href="../api_reference_tf/" class="nav-link">
                                     Next <i class="fa fa-arrow-right"></i>
                                 </a>
                             </li>
@@ -88,9 +88,9 @@
     <div id="toc-collapse" class="navbar-collapse collapse card bg-secondary">
         <ul class="nav flex-column">
             
-            <li class="nav-item" data-level="1"><a href="#about" class="nav-link">About</a>
+            <li class="nav-item" data-level="1"><a href="#methods" class="nav-link">Methods</a>
               <ul class="nav flex-column">
-            <li class="nav-item" data-level="2"><a href="#citing" class="nav-link">Citing</a>
+            <li class="nav-item" data-level="2"><a href="#fedpredict_client_torch" class="nav-link">fedpredict_client_torch</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -101,21 +101,139 @@
 </div></div>
                     <div class="col-md-9" role="main">
 
-<h1 id="about">About</h1>
-<p>FedPredict is an open-source project freely available on <a href="https://github.com/claudiocapanema/fedpredict">Github</a> under the BSD-3 license.
-This project has been developed in the laboratories WISEMAP (UFMG) and H.IAAC (UNICAMP).</p>
-<h2 id="citing">Citing</h2>
-<p>If FedPredict has been useful to you, please cite our <a href="https://ieeexplore.ieee.org/abstract/document/10257293">paper</a>. The BibTeX is presented as follows:</p>
-<pre><code>@inproceedings{capanema2023fedpredict,
-  title={FedPredict: Combining Global and Local Parameters in the Prediction Step of Federated Learning},
-  author={Capanema, Cl{\'a}udio GS and de Souza, Allan M and Silva, Fabr{\'\i}cio A and Villas, Leandro A and Loureiro, Antonio AF},
-  booktitle={2023 19th International Conference on Distributed Computing in Smart Systems and the Internet of Things (DCOSS-IoT)},
-  pages={17--24},
-  year={2023},
-  doi={https://doi.org/10.1109/DCOSS-IoT58021.2023.00012},
-  organization={IEEE}
-}
-</code></pre></div>
+<h1 id="methods">Methods</h1>
+<p>FedPredict has three main components:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Method</th>
+<th style="text-align: center;">Description</th>
+<th style="text-align: center;">Return</th>
+<th style="text-align: center;">Location</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a href="#fedpredict_client_torch">fedpredict_client_torch</a></td>
+<td style="text-align: center;">Combines global and local parameters. Used when data is non-ID either stationary or non-stationary.</td>
+<td style="text-align: center;">The combined model of type "torch.nn.Module" or "tf.Module".</td>
+<td style="text-align: center;">Client-side.</td>
+</tr>
+<tr>
+<td style="text-align: left;">fedpredict_client_weight_predictions_torch</td>
+<td style="text-align: center;">Weight predictions to prioritize the most frequent classes in the newest data. Used when data is non-stationary and non-IID.</td>
+<td style="text-align: center;">The probabilities vectors "Numpy array".</td>
+<td style="text-align: center;">Client-side.</td>
+</tr>
+<tr>
+<td style="text-align: left;">fedpredict_server</td>
+<td style="text-align: center;">Compress the global model parameters for further sending to the clients</td>
+<td style="text-align: center;">The global model parameters as "List[Numpy array]".</td>
+<td style="text-align: center;">Server-side</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<h2 id="fedpredict_client_torch">fedpredict_client_torch</h2>
+</blockquote>
+<p>This method includes two versions of FedPredict.</p>
+<p>Version 1: FedPredict presented in https://ieeexplore.ieee.org/abstract/document/10257293
+     Configuration: this version is the default.
+     This method combines global and local parameters, providing both generalization and personalization.
+     It also prevents the drop in the accuracy when new/untrained clients are evaluated</p>
+<p>Version 2: FedPredict-Dynamic
+     Configuration: set 'dynamic=True' and inform the hyperparameters 'similarity' and 'fraction_of_classes'.
+     This method has the same benefits as the v.1.
+     However, differently from v.1, in the model combination process, it takes into account the similarity between
+     the last and current datasets to weigh the combination and provide support for heterogeneous and
+     non-stationary/dynamic data.</p>
+<h4 id="arguments">Arguments</h4>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Argument</th>
+<th style="text-align: center;">Description</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">local_model</td>
+<td style="text-align: center;">Local client's model.</td>
+<td style="text-align: center;">torch.nn.Module, required.</td>
+<td style="text-align: center;">-</td>
+</tr>
+<tr>
+<td style="text-align: left;">global_parameters</td>
+<td style="text-align: center;">The server's global parameters.</td>
+<td style="text-align: center;">list[np.array], required.</td>
+<td style="text-align: center;">-</td>
+</tr>
+<tr>
+<td style="text-align: left;">t</td>
+<td style="text-align: center;">The current round.</td>
+<td style="text-align: center;">int, required.</td>
+<td style="text-align: center;">-</td>
+</tr>
+<tr>
+<td style="text-align: left;">T</td>
+<td style="text-align: center;">The total rounds.</td>
+<td style="text-align: center;">int, required.</td>
+<td style="text-align: center;">-</td>
+</tr>
+<tr>
+<td style="text-align: left;">nt</td>
+<td style="text-align: center;">The number of rounds the client is without training.</td>
+<td style="text-align: center;">int, required.</td>
+<td style="text-align: center;">-</td>
+</tr>
+<tr>
+<td style="text-align: left;">M</td>
+<td style="text-align: center;">The list of indexes of the shared layers.</td>
+<td style="text-align: center;">list, optional.</td>
+<td style="text-align: center;">[]</td>
+</tr>
+<tr>
+<td style="text-align: left;">similarity</td>
+<td style="text-align: center;">The similarity between the old data (i.e., the one that the local model was previously trained on) and the new data. Used when Dynamic=True.</td>
+<td style="text-align: center;">float, optional</td>
+<td style="text-align: center;">1</td>
+</tr>
+<tr>
+<td style="text-align: left;">fraction_of_classes</td>
+<td style="text-align: center;">The fraction of classes in the local data. Used when Dynamic=True.</td>
+<td style="text-align: center;">float, optional.</td>
+<td style="text-align: center;">None</td>
+</tr>
+<tr>
+<td style="text-align: left;">filename</td>
+<td style="text-align: center;">The filename of the local model is saved.</td>
+<td style="text-align: center;">str, optional.</td>
+<td style="text-align: center;">''</td>
+</tr>
+<tr>
+<td style="text-align: left;">knowledge_distillation</td>
+<td style="text-align: center;">If the model has knowledge distillation, then set True, to indicate that the global model parameters have to be combined with the student model</td>
+<td style="text-align: center;">bool, optional.</td>
+<td style="text-align: center;">False</td>
+</tr>
+<tr>
+<td style="text-align: left;">decompress</td>
+<td style="text-align: center;">Whether or not to decompress global model parameters in case a previous compression was applied. Only set True if using "FedPredict_server" and compressing the shared parameters.</td>
+<td style="text-align: center;">bool, optional.</td>
+<td style="text-align: center;">False</td>
+</tr>
+<tr>
+<td style="text-align: left;">dynamic</td>
+<td style="text-align: center;">If True, it uses the FedPredict-Dynamic. If False, it uses the traditional FedPredict.</td>
+<td style="text-align: center;">bool, optional.</td>
+<td style="text-align: center;">False</td>
+</tr>
+</tbody>
+</table>
+<h4 id="return">Return</h4>
+<p>The combined model of type 'torch.nn.Module'.</p></div>
             </div>
         </div>
 

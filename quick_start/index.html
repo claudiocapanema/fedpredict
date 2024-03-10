@@ -36,6 +36,19 @@
                             <li class="navitem active">
                                 <a href="./" class="nav-link">Quick start</a>
                             </li>
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">API Reference <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../api_reference_torch/" class="dropdown-item">Pytorch</a>
+</li>
+                                    
+<li>
+    <a href="../api_reference_tf/" class="dropdown-item">TensorFlow</a>
+</li>
+                                </ul>
+                            </li>
                             <li class="navitem">
                                 <a href="../about/" class="nav-link">About</a>
                             </li>
@@ -53,7 +66,7 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a rel="next" href="../about/" class="nav-link">
+                                <a rel="next" href="../api_reference_torch/" class="nav-link">
                                     Next <i class="fa fa-arrow-right"></i>
                                 </a>
                             </li>
@@ -77,14 +90,6 @@
             
             <li class="nav-item" data-level="1"><a href="#quick-start" class="nav-link">Quick start</a>
               <ul class="nav flex-column">
-            <li class="nav-item" data-level="2"><a href="#preliminaries" class="nav-link">Preliminaries</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-level="2"><a href="#tutorials" class="nav-link">Tutorials</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
             <li class="nav-item" data-level="2"><a href="#simple-usage" class="nav-link">Simple usage</a>
               <ul class="nav flex-column">
               </ul>
@@ -97,45 +102,6 @@
                     <div class="col-md-9" role="main">
 
 <h1 id="quick-start">Quick start</h1>
-<h2 id="preliminaries">Preliminaries</h2>
-<p>FedPredict has four main components:</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">Method</th>
-<th style="text-align: center;">Description</th>
-<th style="text-align: center;">Return</th>
-<th style="text-align: center;">Location</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">fedpredict_client_traditional</td>
-<td style="text-align: center;">Combines global and local parameters. Used when data is stationary and non-IID.</td>
-<td style="text-align: center;">The combined model as "torch.nn.Module".</td>
-<td style="text-align: center;">Client-side.</td>
-</tr>
-<tr>
-<td style="text-align: left;">fedpredict_client_dynamic</td>
-<td style="text-align: center;">Combines global and local parameters. Used when data is non-stationary and non-IID.</td>
-<td style="text-align: center;">The combined model as "torch.nn.Module".</td>
-<td style="text-align: center;">Client-side.</td>
-</tr>
-<tr>
-<td style="text-align: left;">fedpredict_client_weight_predictions</td>
-<td style="text-align: center;">Weight predictions to prioritze the most frequent classes in the newest data. Used when data is non-starionary and non-IID.</td>
-<td style="text-align: center;">The probabilities vectors "Numpy array".</td>
-<td style="text-align: center;">Client-side.</td>
-</tr>
-<tr>
-<td style="text-align: left;">fedpredict_server</td>
-<td style="text-align: center;">Compress the global model parameters for further sending to the clients</td>
-<td style="text-align: center;">The global model parameters as "List[Numpy array]".</td>
-<td style="text-align: center;">Server-side</td>
-</tr>
-</tbody>
-</table>
-<h2 id="tutorials">Tutorials</h2>
 <h2 id="simple-usage">Simple usage</h2>
 <p>At the client-side, after receiving the global model parameters in the prediction state, apply FedPredict as follows:</p>
 <pre><code class="language-python">    t = 50 # current round
