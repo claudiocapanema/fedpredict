@@ -6,23 +6,53 @@ FedPredict enanles personalization for tradditional methods, such as FedAvg and 
 It is also a modular plugin that operates in the prediction stage of FL without requiring any modification in the training step. 
 This project has been developed in the laboratories WISEMAP (UFMG) and H.IAAC (UNICAMP).
 
-## Benefits and use cases
+# Welcome to FedPredict
+### The very first Federated Learning Plugin!
 
-FedPredict has the following benefits:
-1. Avoid local training, which is costly and takes more time, by just downloading the current global model and combining it with the local one to perform predictions.
-2. Allowing traditional solutions (e.g., FedAvg) to perform well in non-IID scenarios.
-3. Reduce downlink communication cost: the proposed techniques for reducing downlink communication are independent and flexible and can be leveraged in other solutions.
+FedPredict is a personalization plugin for Federated Learning (FL) methods.
+It allows clients to collaboratively learn from each other without losing personalization in the local data.
 
-The possible use cases are listed as follows:
+## How it works?
 
-1. Different topologies: FL topologies that inhered the standard Server-Client can use the plugin, such as Server Clod-Edge Server-Client.
-2. Outdated client: a client with an outdated model (i.e., trained long ago).
-3. Client with insufficient resources (e.g., data, energy, among others) to frequently perform local training.
-4. New client (i.e., dynamicity in FL): a client recently added to the FL system and has not trained yet. These clients suffer from low performance in model personalization-based solutions.
+FedPredict intelligently combines global and local model parameters. In this process,
+it assigns more or less weight to each type of parameter according to various factors, such as 
+the evolution level (el) of the global model, the update level (ul) of the local model, and the 
+similarity (s) between the old data (i.e., the one in which the model was previously trained) and 
+the recently acquired data). Then, the client uses the combined model to make predictions over the test/val data.
+
+## Benefits
+
+The list of benefits of the plugin as listed as follows:
+
+1. **High accuracy**: it pushes up FL accuracy without requiring additional training!
+2. **Support for dynamic data**: it is designed for stationary and non-stationary non-IID data.
+3. **Concept drift**: FedPredict makes the model almost instantly adapt to the new scenario when concept drift occurs.
+4. **Task independent**: apply FedPredict for any type of deep neural network task.
+2. **Easy to use**: no modifications are necessary in the training stage of your solution!
+3. **Low computational cost**: it is composed of simple operations.
+
+Just plug and play!
+
+## Installation
+
+FedPredict is compatible with Python>=3.8 and is tested on the latest versions of Ubuntu.
+With your virtual environment opened, if you are using **torch** type the following command to install FedPredict from Pypi:
+
+```python
+    pip install fedpredict[torch]
+```
+
+If you are using **Flower** for FL simulation, type:
+
+```python
+    pip install fedpredict[flwr]
+```
 
 ## FL requirements
 
-Are you interested in improving your Federated Learning solution with FedPredict? Take note of the requirements your method should satisfy:
+In general, if your solution shares some level of similarity with FedAvg, then FedPredict is ready to use.
+The requirements are described as follows:
+
 
 1. **Sharing all layers**. The clients have to upload all model layers at every round so the server can aggregate a global model that can be directly leveraged by a new client, as in FedAvg.
 2. **Same model structure**. The layers of the global and local models have to have the same shape to allow the combination of parameters.
@@ -34,7 +64,7 @@ FedPredict-Client is placed on the client-side and the features of its versions 
 
 | Module               | Static clients | Dynamic clients | Static heterogeneous data | Dynamic heterogeneous data | 
 |:---------------------|     :---:      |     :---:     |:-------------------------:|:--------------------------:|
-| FedPredict Client    |    :heavy_check_mark:   |    :heavy_check_mark:   |             :heavy_check_mark:              |             -              |
+| FedPredict Client    |    :heavy_check_mark:   |    :heavy_check_mark:   |             :heavy_check_mark:              |              :heavy_check_mark:              |
 
 FedPredict-Server is placed on the server-side and is responsible for compressing the shared global model parameters.
 

@@ -3,4 +3,7 @@ site_url: https://www.fedpredict.com/
 nav:
   - Home: index.md
   - Quick start: quick_start.md
+  - API Reference:
+      - 'Pytorch': api_reference_torch.md
+      - 'TensorFlow': api_reference_tf.md
   - About: about.md

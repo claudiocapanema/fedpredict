@@ -2,17 +2,27 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://www.fedpredict.com/</loc>
-         <lastmod>2024-02-27</lastmod>
+         <lastmod>2024-03-10</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://www.fedpredict.com/about/</loc>
-         <lastmod>2024-02-27</lastmod>
+         <lastmod>2024-03-10</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://www.fedpredict.com/api_reference_tf/</loc>
+         <lastmod>2024-03-10</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://www.fedpredict.com/api_reference_torch/</loc>
+         <lastmod>2024-03-10</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://www.fedpredict.com/quick_start/</loc>
-         <lastmod>2024-02-27</lastmod>
+         <lastmod>2024-03-10</lastmod>
          <changefreq>daily</changefreq>
     </url>
 </urlset>

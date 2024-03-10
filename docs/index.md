@@ -27,17 +27,17 @@ Just plug and play!
 
 ## Installation
 
-FedPredict is compatible with Python 3.9 and is tested on the latest versions of Ubuntu.
-With your virtual environment opened, type the following command to install FedPredict from Pypi:
+FedPredict is compatible with Python>=3.8 and is tested on the latest versions of Ubuntu.
+With your virtual environment opened, if you are using **torch** type the following command to install FedPredict from Pypi:
 
 ```python
-    pip install fedpredict
+    pip install fedpredict[torch]
 ```
 
-To install from Google Colab:
+If you are using **Flower** for FL simulation, type:
 
 ```python
-    ! pip install fedpredict
+    pip install fedpredict[flwr]
 ```
 
 ## FL requirements
