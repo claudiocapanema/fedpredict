@@ -2,9 +2,15 @@
 # FedPredict
 
 FedPredict is a Federated Learning (FL) plugin that can significantly improve FL solutions without requiring additional training or expensive processing. 
-FedPredict enanles personalization for tradditional methods, such as FedAvg and FedYogi. 
+FedPredict enables personalization for traditional methods, such as FedAvg and FedYogi. 
 It is also a modular plugin that operates in the prediction stage of FL without requiring any modification in the training step. 
 This project has been developed in the laboratories WISEMAP (UFMG) and H.IAAC (UNICAMP).
+
+The list of projects that use FedPredict is the following (updating):
+
+- [FL-H.IAAC](https://github.com/AllanMSouza/FL-H.IAAC): it has the code of the experiments of FedPredict papers in **DCOSS-IoT** 2023 and 2024.
+- PFLib (will be available soon).
+- PyFlexe (will be available soon).
 
 # Welcome to FedPredict
 ### The very first Federated Learning Plugin!
@@ -60,13 +66,13 @@ The requirements are described as follows:
 
 ## Components
 
-FedPredict-Client is placed on the client-side and the features of its versions are listed below:
+FedPredict-Client is placed on the client side and the features of its versions are listed below:
 
 | Module               | Static clients | Dynamic clients | Static heterogeneous data | Dynamic heterogeneous data | 
 |:---------------------|     :---:      |     :---:     |:-------------------------:|:--------------------------:|
 | FedPredict Client    |    :heavy_check_mark:   |    :heavy_check_mark:   |             :heavy_check_mark:              |              :heavy_check_mark:              |
 
-FedPredict-Server is placed on the server-side and is responsible for compressing the shared global model parameters.
+FedPredict-Server is placed on the server side and is responsible for compressing the shared global model parameters.
 
 ### Citing
 
