@@ -1,5 +1,6 @@
 
-# FedPredict
+# Welcome to FedPredict
+## The first ever plugin for Federated Learning!
 
 FedPredict is a Federated Learning (FL) plugin that can significantly improve FL solutions without requiring additional training or expensive processing. 
 FedPredict enables personalization for traditional methods, such as FedAvg and FedYogi. 
@@ -11,12 +12,6 @@ The list of projects that use FedPredict is the following (updating):
 - [FL-H.IAAC](https://github.com/AllanMSouza/FL-H.IAAC): it has the code of the experiments of FedPredict papers in **DCOSS-IoT** 2023 and 2024.
 - PFLib (will be available soon).
 - PyFlexe (will be available soon).
-
-# Welcome to FedPredict
-### The very first Federated Learning Plugin!
-
-FedPredict is a personalization plugin for Federated Learning (FL) methods.
-It allows clients to collaboratively learn from each other without losing personalization in the local data.
 
 ## How it works?
 
