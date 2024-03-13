@@ -94,6 +94,10 @@
               <ul class="nav flex-column">
               </ul>
             </li>
+            <li class="nav-item" data-level="2"><a href="#fedpredict_client_weight_predictions_torch" class="nav-link">fedpredict_client_weight_predictions_torch</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
               </ul>
             </li>
         </ul>
@@ -120,7 +124,7 @@
 <td style="text-align: center;">Client-side.</td>
 </tr>
 <tr>
-<td style="text-align: left;">fedpredict_client_weight_predictions_torch</td>
+<td style="text-align: left;"><a href="#fedpredict_client_weight_predictions_torch"> fedpredict_client_weight_predictions_torch</a></td>
 <td style="text-align: center;">Weight predictions to prioritize the most frequent classes in the newest data. Used when data is non-stationary and non-IID.</td>
 <td style="text-align: center;">The probabilities vectors "Numpy array".</td>
 <td style="text-align: center;">Client-side.</td>
@@ -136,7 +140,7 @@
 <blockquote>
 <h2 id="fedpredict_client_torch">fedpredict_client_torch</h2>
 </blockquote>
-<p>This method includes two versions of FedPredict.</p>
+<p>This function includes two versions of FedPredict.</p>
 <p>Version 1: FedPredict presented in https://ieeexplore.ieee.org/abstract/document/10257293
      Configuration: this version is the default.
      This method combines global and local parameters, providing both generalization and personalization.
@@ -196,7 +200,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">similarity</td>
-<td style="text-align: center;">The similarity between the old data (i.e., the one that the local model was previously trained on) and the new data. Used when Dynamic=True.</td>
+<td style="text-align: center;">The similarity between the old data (i.e., the one that the local model was previously trained on) and the new data. Note that s \in [0, 1]. Used when Dynamic=True.</td>
 <td style="text-align: center;">float, optional</td>
 <td style="text-align: center;">1</td>
 </tr>
@@ -208,7 +212,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">filename</td>
-<td style="text-align: center;">The filename of the local model is saved.</td>
+<td style="text-align: center;">The filename where the local model is saved.</td>
 <td style="text-align: center;">str, optional.</td>
 <td style="text-align: center;">''</td>
 </tr>
@@ -233,7 +237,48 @@
 </tbody>
 </table>
 <h4 id="return">Return</h4>
-<p>The combined model of type 'torch.nn.Module'.</p></div>
+<p>The combined model of type 'torch.nn.Module'.</p>
+<blockquote>
+<h2 id="fedpredict_client_weight_predictions_torch">fedpredict_client_weight_predictions_torch</h2>
+</blockquote>
+<p>This function gives more weight to the predominant classes in the current dataset. This function is part of
+<strong>FedPredict-Dynamic</strong>.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Argument</th>
+<th style="text-align: center;">Description</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">output</td>
+<td style="text-align: center;">The output of the model after applying 'softmax' activation function.</td>
+<td style="text-align: center;">torch.Tensor, required.</td>
+<td style="text-align: center;">-</td>
+</tr>
+<tr>
+<td style="text-align: left;">t</td>
+<td style="text-align: center;">The current round.</td>
+<td style="text-align: center;">int, required.</td>
+<td style="text-align: center;">-</td>
+</tr>
+<tr>
+<td style="text-align: left;">current_proportion</td>
+<td style="text-align: center;">The classes proportion in the current training data.</td>
+<td style="text-align: center;">int, required.</td>
+<td style="text-align: center;">-</td>
+</tr>
+<tr>
+<td style="text-align: left;">similarity</td>
+<td style="text-align: center;">The similarity between the old data (i.e., the one that the local model was previously trained on) and the new data. Note that s \in [0, 1]. Used when Dynamic=True.</td>
+<td style="text-align: center;">float, optional</td>
+<td style="text-align: center;">1</td>
+</tr>
+</tbody>
+</table></div>
             </div>
         </div>
 
