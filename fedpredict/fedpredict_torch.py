@@ -21,6 +21,12 @@ except ImportError:
     _has_flwr = False
 else:
     _has_flwr = True
+try:
+    import torch
+except ImportError:
+    _has_torch = False
+else:
+    _has_torch = True
 
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
@@ -36,7 +42,7 @@ NDArrays = List[NDArray]
 
 # FedPredict client
 
-def fedpredict_client_weight_predictions_torch(output: torch.Tensor, t: int, current_proportion: np.array, s: float, framework='torch') -> np.array:
+def fedpredict_client_weight_predictions_torch(output: torch.Tensor, t: int, current_proportion: np.array, similarity: float) -> np.array:
     """
         This function gives more weight to the predominant classes in the current dataset. This function is part of
         FedPredict-Dynamic
@@ -44,12 +50,12 @@ def fedpredict_client_weight_predictions_torch(output: torch.Tensor, t: int, cur
         output: torch.Tensor, required
             The output of the model after applying 'softmax' activation function.
         t: int, required
-            The current server round
+            The current round.
         current_proportion:  np.array, required
-            The classes proportion in the current training data
-        s: float, required
-            The similarity between the previous and current dataset. Note that s \in [0, 1]
-        framework: str, optional. Default='torch'
+            The classes proportion in the current training data.
+        similarity: float, required
+            The similarity between the old data (i.e., the one that the local model was previously trained on) and the new
+        data. Note that s \in [0, 1].
 
     Returns:
         np.array containing the weighted predictions
@@ -57,11 +63,11 @@ def fedpredict_client_weight_predictions_torch(output: torch.Tensor, t: int, cur
     """
 
     try:
-        if s != 1 and t > 10:
-            if framework == 'torch':
-                output = torch.multiply(output, torch.from_numpy(current_proportion * (1 - s)))
+        if similarity != 1 and t > 10:
+            if _has_torch:
+                output = torch.multiply(output, torch.from_numpy(current_proportion * (1 - similarity)))
             else:
-                raise ValueError('Framework not found')
+                raise ValueError("Framework 'torch' not found")
 
         return output
 
@@ -83,7 +89,7 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
                             decompress=False,
                             dynamic=False) -> torch.nn.Module:
     """
-    This method includes two versions of FedPredict.
+    This function includes two versions of FedPredict.
 
  Version 1: FedPredict presented in https://ieeexplore.ieee.org/abstract/document/10257293
      Configuration: this version is the default.
@@ -101,12 +107,20 @@ Args:
     global_parameters: list[np.array], required.
     current_proportion: list[float], required.
     t: int, required.
+        The current round.
     T: int, required.
+        The total rounds.
     nt: int, required.
+        The number of rounds the client is without training.
     M: list, optional. Default=[]
+        The list of indexes of the shared layers.
     similarity: float, optional. Default=1. Used when Dynamic=True.
+        The similarity between the old data (i.e., the one that the local model was previously trained on) and the new
+        data.Note that s \in [0, 1].
     fraction_of_classes: float, optional. Default=-1. Used when Dynamic=True.
+        The fraction of classes in the local data.
     filename: str, optional. Default=''
+        The filename where the local model is saved.
     knowledge_distillation: bool, optional. Default=False
         If the model has knowledge distillation, then set True, to indicate that the global model parameters have
         to be combined with the student model
@@ -124,6 +138,9 @@ Returns: torch.nn.Module
 
 
     try:
+
+        if not _has_torch:
+            raise ValueError("Framework 'torch' not found")
 
         if not dynamic or len(current_proportion) > 0 or fraction_of_classes==-1:
 
