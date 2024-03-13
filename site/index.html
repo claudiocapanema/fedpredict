@@ -90,6 +90,10 @@
             
             <li class="nav-item" data-level="1"><a href="#welcome-to-fedpredict" class="nav-link">Welcome to FedPredict</a>
               <ul class="nav flex-column">
+            <li class="nav-item" data-level="2"><a href="#the-first-ever-plugin-for-federated-learning" class="nav-link">The first ever plugin for Federated Learning!</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
             <li class="nav-item" data-level="2"><a href="#how-it-works" class="nav-link">How it works?</a>
               <ul class="nav flex-column">
               </ul>
@@ -114,9 +118,17 @@
                     <div class="col-md-9" role="main">
 
 <h1 id="welcome-to-fedpredict">Welcome to FedPredict</h1>
-<h3 id="the-very-first-federated-learning-plugin">The very first Federated Learning Plugin!</h3>
-<p>FedPredict is a personalization plugin for Federated Learning (FL) methods.
-It allows clients to collaboratively learn from each other without losing personalization in the local data.</p>
+<h2 id="the-first-ever-plugin-for-federated-learning">The first ever plugin for Federated Learning!</h2>
+<p>FedPredict is a Federated Learning (FL) plugin that can significantly improve FL solutions without requiring additional training or expensive processing. 
+FedPredict enables personalization for traditional methods, such as FedAvg and FedYogi. 
+It is also a modular plugin that operates in the prediction stage of FL without requiring any modification in the training step. 
+This project has been developed in the laboratories WISEMAP (UFMG), H.IAAC (UNICAMP), and NESPED (UFV).</p>
+<p>The list of projects that use FedPredict is the following (updating):</p>
+<ul>
+<li><a href="https://github.com/AllanMSouza/FL-H.IAAC">FL-H.IAAC</a>: it has the code of the experiments of FedPredict papers in <strong>DCOSS-IoT 2023 and 2024 (i.e., FedPredict and FedPredict-Dynamic</strong>).</li>
+<li>PFLib (will be available soon).</li>
+<li>PyFlexe (will be available soon).</li>
+</ul>
 <h2 id="how-it-works">How it works?</h2>
 <p>FedPredict intelligently combines global and local model parameters. In this process,
 it assigns more or less weight to each type of parameter according to various factors, such as 
@@ -232,5 +244,5 @@ The requirements are described as follows:</p>
 
 <!--
 MkDocs version : 1.5.3
-Build Date UTC : 2024-03-10 22:32:02.078827+00:00
+Build Date UTC : 2024-03-13 13:14:22.633897+00:00
 -->

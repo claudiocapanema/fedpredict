@@ -13,6 +13,10 @@ The list of projects that use FedPredict is the following (updating):
 - PFLib (will be available soon).
 - PyFlexe (will be available soon).
 
+## Documentation
+
+Please access the FedPredict [documentation](https://claudiocapanema.github.io/fedpredict/) for tutorials and API details.
+
 ## How it works?
 
 FedPredict intelligently combines global and local model parameters. In this process,
