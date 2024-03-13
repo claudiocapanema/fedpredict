@@ -9,7 +9,7 @@ This project has been developed in the laboratories WISEMAP (UFMG), H.IAAC (UNIC
 
 The list of projects that use FedPredict is the following (updating):
 
-- [FL-H.IAAC](https://github.com/AllanMSouza/FL-H.IAAC): it has the code of the experiments of FedPredict papers in **DCOSS-IoT 2023 and 2024 (i.e., FedPredict and FedPredict-Dynamic**.
+- [FL-H.IAAC](https://github.com/AllanMSouza/FL-H.IAAC): it has the code of the experiments of FedPredict papers in **DCOSS-IoT 2023 and 2024 (i.e., FedPredict and FedPredict-Dynamic**).
 - PFLib (will be available soon).
 - PyFlexe (will be available soon).
 
