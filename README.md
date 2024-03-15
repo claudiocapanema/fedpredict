@@ -25,6 +25,8 @@ the evolution level (el) of the global model, the update level (ul) of the local
 similarity (s) between the old data (i.e., the one in which the model was previously trained) and 
 the recently acquired data). Then, the client uses the combined model to make predictions over the test/val data.
 
+![](./fedpredict%20v5.jpeg)
+
 ## Benefits
 
 The list of benefits of the plugin as listed as follows:

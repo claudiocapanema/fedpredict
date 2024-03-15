@@ -76,7 +76,7 @@ def fedpredict_client_weight_predictions_torch(output: torch.Tensor, t: int, cur
         print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
 
 def fedpredict_client_torch(local_model: torch.nn.Module,
-                            global_parameters: Union[torch.nn.Module, List[NDArrays]],
+                            global_model: Union[torch.nn.Module, List[NDArrays]],
                             t: int,
                             T: int,
                             nt: int,
@@ -104,7 +104,7 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
      non-stationary/dynamic data.
 Args:
     local_model: torch.nn.Module, required.
-    global_parameters: list[np.array], required.
+    global_model: list[np.array], required.
     current_proportion: list[float], required.
     t: int, required.
         The current round.
@@ -145,7 +145,7 @@ Returns: torch.nn.Module
         if not dynamic or len(current_proportion) > 0 or fraction_of_classes==-1:
 
             return fedpredict_client_traditional_torch(local_model=local_model,
-                                                       global_model=global_parameters,
+                                                       global_model=global_model,
                                                        t=t,
                                                        T=T,
                                                        nt=nt,
@@ -157,7 +157,7 @@ Returns: torch.nn.Module
         else:
 
             return fedpredict_client_dynamic_torch(local_model=local_model,
-                                                   global_model=global_parameters,
+                                                   global_model=global_model,
                                                    current_proportion=current_proportion,
                                                    t=t,
                                                    T=T,
@@ -290,7 +290,8 @@ def fedpredict_client_dynamic_torch(local_model: torch.nn.Module,
             model_shape = [i.detach().cpu().numpy().shape for i in local_model.student.parameters()]
         else:
             model_shape = [i.detach().cpu().numpy().shape for i in local_model.parameters()]
-        if type(global_model) != List:
+        print("a d: ", type(global_model))
+        if type(global_model) != list:
             global_model = torch_to_list_of_numpy(global_model)
         if len(M) == 0:
             M = [i for i in range(len(global_model))]
@@ -308,7 +309,7 @@ def fedpredict_client_dynamic_torch(local_model: torch.nn.Module,
                                                             similarity, fraction_of_classes)
         else:
             # print("usar modelo global: ", cid)
-            if knowledge_distillation is None:
+            if not knowledge_distillation:
                 for old_param, new_param in zip(local_model.parameters(), global_model):
                     old_param.data = new_param.data.clone()
             else:
