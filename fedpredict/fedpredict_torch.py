@@ -214,7 +214,7 @@ def fedpredict_client_traditional_torch(local_model: torch.nn.Module,
             model_shape = [i.detach().cpu().numpy().shape for i in local_model.student.parameters()]
         else:
             model_shape = [i.detach().cpu().numpy().shape for i in local_model.parameters()]
-        if type(global_model) != List:
+        if type(global_model) != list:
             global_model = torch_to_list_of_numpy(global_model)
         if len(M) == 0:
             M = [i for i in range(len(global_model))]
