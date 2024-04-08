@@ -14,7 +14,7 @@ At the client-side, after receiving the global model parameters in the predictio
     
     # apply fedpredict
     combinel_model = fedpredict_client_torch(local_model=local_model, 
-                                             global_parameters=global_model, 
+                                             global_model=global_model, 
                                              t=t, 
                                              T=T, 
                                              nt=nt)
