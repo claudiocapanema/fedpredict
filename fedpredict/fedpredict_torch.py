@@ -142,9 +142,11 @@ Returns: torch.nn.Module
         if not _has_torch:
             raise ValueError("Framework 'torch' not found")
 
+        device = [i for i in local_model.parameters()][0].device
+
         if not dynamic or len(current_proportion) > 0 or fraction_of_classes==-1:
 
-            return fedpredict_client_traditional_torch(local_model=local_model,
+            combined_local_model = fedpredict_client_traditional_torch(local_model=local_model,
                                                        global_model=global_model,
                                                        t=t,
                                                        T=T,
@@ -156,7 +158,7 @@ Returns: torch.nn.Module
 
         else:
 
-            return fedpredict_client_dynamic_torch(local_model=local_model,
+            combined_local_model = fedpredict_client_dynamic_torch(local_model=local_model,
                                                    global_model=global_model,
                                                    current_proportion=current_proportion,
                                                    t=t,
@@ -169,8 +171,10 @@ Returns: torch.nn.Module
                                                    knowledge_distillation=knowledge_distillation,
                                                    decompress=decompress)
 
+        return combined_local_model.to(device)
+
     except Exception as e:
-        print("FedPredict client dynamic")
+        print("FedPredict client torch")
         print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
 
 
