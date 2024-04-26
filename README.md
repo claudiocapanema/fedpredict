@@ -1,6 +1,6 @@
 
 # Welcome to FedPredict
-## The first ever Federated Learning plugin!
+## The first-ever Federated Learning plugin!
 
 FedPredict is a Federated Learning (FL) plugin that can significantly improve FL solutions without requiring additional training or expensive processing. 
 FedPredict enables personalization for traditional methods, such as FedAvg and FedYogi. 
@@ -37,12 +37,13 @@ the recently acquired data). Then, the client uses the combined model to make pr
 
 The list of benefits of the plugin as listed as follows:
 
-1. **High accuracy**: it pushes up FL accuracy without requiring additional training!
-2. **Support for dynamic data**: it is designed for stationary and non-stationary non-IID data.
-3. **Concept drift**: FedPredict makes the model almost instantly adapt to the new scenario when concept drift occurs.
+1. **High performance**: achieve high performance in heterogeneous data.
+2. **High efficiency for FL**: achieve high performance even when training less.
+3. **Concept drift-awareness**: FedPredict makes the model almost instantly adapt to the new scenario when concept drift occurs.
 4. **Task independent**: apply FedPredict for any type of deep neural network task.
-2. **Easy to use**: no modifications are necessary in the training stage of your solution!
-3. **Low computational cost**: it is composed of simple operations.
+5. **Easy to use and modular**: no modifications are necessary in the training stage of your solution!
+6. **Lightweight**: it is composed of simple operations.
+7. **Low downlink communication cost**: FedPredict server compresses global model parameters.
 
 Just plug and play!
 
@@ -95,5 +96,3 @@ If FedPredict has been useful to you, please cite our [paper](https://ieeexplore
   organization={IEEE}
 }
 ```
-
-
