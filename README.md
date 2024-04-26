@@ -1,6 +1,6 @@
 
 # Welcome to FedPredict
-## The first ever plugin for Federated Learning!
+## The first ever Federated Learning plugin!
 
 FedPredict is a Federated Learning (FL) plugin that can significantly improve FL solutions without requiring additional training or expensive processing. 
 FedPredict enables personalization for traditional methods, such as FedAvg and FedYogi. 
@@ -9,13 +9,19 @@ This project has been developed in the laboratories WISEMAP (UFMG), H.IAAC (UNIC
 
 The list of projects that use FedPredict is the following (updating):
 
-- [FL-H.IAAC](https://github.com/AllanMSouza/FL-H.IAAC): it has the code of the experiments of FedPredict papers in **DCOSS-IoT 2023 and 2024 (i.e., FedPredict and FedPredict-Dynamic**).
+- [FL-H.IAAC](https://github.com/AllanMSouza/FL-H.IAAC): it has the code of the experiments of FedPredict papers in **IEEE DCOSS-IoT [2023](https://ieeexplore.ieee.org/document/10257293) and 2024 (i.e., FedPredict and FedPredict-Dynamic**).
 - PFLib (will be available soon).
 - PyFlexe (will be available soon).
 
 ## Documentation
 
 Please access the FedPredict [documentation](https://claudiocapanema.github.io/fedpredict/) for tutorials and API details.
+
+## Why FedPredict?
+
+It is better working with the **prediction stage**. See the comparison below!
+
+![](./contribu.jpeg)
 
 ## How it works?
 
@@ -25,7 +31,7 @@ the evolution level (el) of the global model, the update level (ul) of the local
 similarity (s) between the old data (i.e., the one in which the model was previously trained) and 
 the recently acquired data). Then, the client uses the combined model to make predictions over the test/val data.
 
-![](./fedpredict%20v5.jpeg)
+![](./fedpredictv5.jpeg)
 
 ## Benefits
 
@@ -67,13 +73,12 @@ The requirements are described as follows:
 
 ## Components
 
-FedPredict-Client is placed on the client side and the features of its versions are listed below:
+Our solution has two main components: FedPredict client and FedPredict server. Their objectives are described below:
 
-| Module               | Static clients | Dynamic clients | Static heterogeneous data | Dynamic heterogeneous data | 
-|:---------------------|     :---:      |     :---:     |:-------------------------:|:--------------------------:|
-| FedPredict Client    |    :heavy_check_mark:   |    :heavy_check_mark:   |             :heavy_check_mark:              |              :heavy_check_mark:              |
-
-FedPredict-Server is placed on the server side and is responsible for compressing the shared global model parameters.
+| Components        |                                                      Objetive                                                       | 
+|:------------------|:-------------------------------------------------------------------------------------------------------------------:|
+| FedPredict Client |               Transfer the knowledge from the updated global model to the client's stale local model                |
+| FedPredict server | Compresses the updated global model parameters to further send to the clients. Used together with FedPredict client |
 
 ### Citing
 
