@@ -90,7 +90,15 @@
             
             <li class="nav-item" data-level="1"><a href="#welcome-to-fedpredict" class="nav-link">Welcome to FedPredict</a>
               <ul class="nav flex-column">
-            <li class="nav-item" data-level="2"><a href="#the-first-ever-plugin-for-federated-learning" class="nav-link">The first ever plugin for Federated Learning!</a>
+            <li class="nav-item" data-level="2"><a href="#the-first-ever-federated-learning-plugin" class="nav-link">The first-ever Federated Learning plugin!</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#documentation" class="nav-link">Documentation</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#why-fedpredict" class="nav-link">Why FedPredict?</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -110,6 +118,10 @@
               <ul class="nav flex-column">
               </ul>
             </li>
+            <li class="nav-item" data-level="2"><a href="#components" class="nav-link">Components</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
               </ul>
             </li>
         </ul>
@@ -118,38 +130,44 @@
                     <div class="col-md-9" role="main">
 
 <h1 id="welcome-to-fedpredict">Welcome to FedPredict</h1>
-<h2 id="the-first-ever-plugin-for-federated-learning">The first ever plugin for Federated Learning!</h2>
+<h2 id="the-first-ever-federated-learning-plugin">The first-ever Federated Learning plugin!</h2>
 <p>FedPredict is a Federated Learning (FL) plugin that can significantly improve FL solutions without requiring additional training or expensive processing. 
 FedPredict enables personalization for traditional methods, such as FedAvg and FedYogi. 
 It is also a modular plugin that operates in the prediction stage of FL without requiring any modification in the training step. 
 This project has been developed in the laboratories WISEMAP (UFMG), H.IAAC (UNICAMP), and NESPED (UFV).</p>
 <p>The list of projects that use FedPredict is the following (updating):</p>
 <ul>
-<li><a href="https://github.com/AllanMSouza/FL-H.IAAC">FL-H.IAAC</a>: it has the code of the experiments of FedPredict papers in <strong>DCOSS-IoT 2023 and 2024 (i.e., FedPredict and FedPredict-Dynamic</strong>).</li>
+<li><a href="https://github.com/AllanMSouza/FL-H.IAAC">FL-H.IAAC</a>: it has the code of the experiments of FedPredict papers in <strong>IEEE DCOSS-IoT <a href="https://ieeexplore.ieee.org/document/10257293">2023</a> and 2024 (i.e., FedPredict and FedPredict-Dynamic</strong>).</li>
 <li>PFLib (will be available soon).</li>
 <li>PyFlexe (will be available soon).</li>
 </ul>
+<h2 id="documentation">Documentation</h2>
+<p>Please access the FedPredict <a href="https://claudiocapanema.github.io/fedpredict/">documentation</a> for tutorials and API details.</p>
+<h2 id="why-fedpredict">Why FedPredict?</h2>
+<p>It is better working with the <strong>prediction stage</strong>. See the comparison below!</p>
+<p><img alt="" src="images/contribu.jpeg" /></p>
 <h2 id="how-it-works">How it works?</h2>
 <p>FedPredict intelligently combines global and local model parameters. In this process,
 it assigns more or less weight to each type of parameter according to various factors, such as 
 the evolution level (el) of the global model, the update level (ul) of the local model, and the 
 similarity (s) between the old data (i.e., the one in which the model was previously trained) and 
 the recently acquired data). Then, the client uses the combined model to make predictions over the test/val data.</p>
-<p><img alt="" src="../fedpredict%20v5.jpeg" /></p>
+<p><img alt="" src="images/fedpredictv5.jpeg" /></p>
 <h2 id="benefits">Benefits</h2>
 <p>The list of benefits of the plugin as listed as follows:</p>
 <ol>
-<li><strong>High accuracy</strong>: it pushes up FL accuracy without requiring additional training!</li>
-<li><strong>Support for dynamic data</strong>: it is designed for stationary and non-stationary non-IID data.</li>
-<li><strong>Concept drift</strong>: FedPredict makes the model almost instantly adapt to the new scenario when concept drift occurs.</li>
+<li><strong>High performance</strong>: achieve high performance in heterogeneous data.</li>
+<li><strong>High efficiency for FL</strong>: achieve high performance even when training less.</li>
+<li><strong>Concept drift-awareness</strong>: FedPredict makes the model almost instantly adapt to the new scenario when concept drift occurs.</li>
 <li><strong>Task independent</strong>: apply FedPredict for any type of deep neural network task.</li>
-<li><strong>Easy to use</strong>: no modifications are necessary in the training stage of your solution!</li>
-<li><strong>Low computational cost</strong>: it is composed of simple operations.</li>
+<li><strong>Easy to use and modular</strong>: no modifications are necessary in the training stage of your solution!</li>
+<li><strong>Lightweight</strong>: it is composed of simple operations.</li>
+<li><strong>Low downlink communication cost</strong>: FedPredict server compresses global model parameters.</li>
 </ol>
 <p>Just plug and play!</p>
 <h2 id="installation">Installation</h2>
 <p>FedPredict is compatible with Python&gt;=3.8 and is tested on the latest versions of Ubuntu.
-With your virtual environment opened, if you are using <strong>torch</strong> type the following command to install FedPredict from Pypi:</p>
+With your virtual environment opened, if you are using <strong>Torch</strong> type the following command to install FedPredict from Pypi:</p>
 <pre><code class="language-python">    pip install fedpredict[torch]
 </code></pre>
 <p>If you are using <strong>Flower</strong> for FL simulation, type:</p>
@@ -158,11 +176,60 @@ With your virtual environment opened, if you are using <strong>torch</strong> ty
 <h2 id="fl-requirements">FL requirements</h2>
 <p>In general, if your solution shares some level of similarity with FedAvg, then FedPredict is ready to use.
 The requirements are described as follows:</p>
-<ol>
-<li><strong>Sharing all layers</strong>. The clients have to upload all model layers at every round so the server can aggregate a global model that can be directly leveraged by a new client, as in FedAvg.</li>
-<li><strong>Same model structure</strong>. The layers of the global and local models have to have the same shape to allow the combination of parameters.</li>
-<li><strong>Predicting using the combined model</strong>. On the client side, the original method has to be flexible enough to make predictions based on the combined model; otherwise, the plugin will have no effect.</li>
-</ol></div>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Requirement</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Sharing all layers</td>
+<td style="text-align: left;">The clients have to upload all model layers at every round so the server can aggregate a global model that can be directly leveraged by a new client, as in FedAvg</td>
+</tr>
+<tr>
+<td style="text-align: left;">Same model structure</td>
+<td style="text-align: left;">The layers of the global and local models have to have the same shape to allow the combination of parameters</td>
+</tr>
+<tr>
+<td style="text-align: left;">Predicting using the combined model</td>
+<td style="text-align: left;">On the client side, the original method has to be flexible enough to make predictions based on the combined model; otherwise, the plugin will have no effect</td>
+</tr>
+</tbody>
+</table>
+<h2 id="components">Components</h2>
+<p>Our solution has two main components: FedPredict client and FedPredict server. Their objectives are described below:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Components</th>
+<th style="text-align: left;">Objective</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">FedPredict Client</td>
+<td style="text-align: left;">Transfer the knowledge from the updated global model to the client's stale local model</td>
+</tr>
+<tr>
+<td style="text-align: left;">FedPredict server</td>
+<td style="text-align: left;">Compresses the updated global model parameters to further send to the clients. Used together with FedPredict client</td>
+</tr>
+</tbody>
+</table>
+<h3 id="citing">Citing</h3>
+<p>If FedPredict has been useful to you, please cite our <a href="https://ieeexplore.ieee.org/abstract/document/10257293">paper</a>. The BibTeX is presented as follows:</p>
+<pre><code>@inproceedings{capanema2023fedpredict,
+  title={FedPredict: Combining Global and Local Parameters in the Prediction Step of Federated Learning},
+  author={Capanema, Cl{\'a}udio GS and de Souza, Allan M and Silva, Fabr{\'\i}cio A and Villas, Leandro A and Loureiro, Antonio AF},
+  booktitle={2023 19th International Conference on Distributed Computing in Smart Systems and the Internet of Things (DCOSS-IoT)},
+  pages={17--24},
+  year={2023},
+  doi={https://doi.org/10.1109/DCOSS-IoT58021.2023.00012},
+  organization={IEEE}
+}
+</code></pre></div>
             </div>
         </div>
 
@@ -245,5 +312,5 @@ The requirements are described as follows:</p>
 
 <!--
 MkDocs version : 1.5.3
-Build Date UTC : 2024-03-15 16:11:59.787984+00:00
+Build Date UTC : 2024-04-28 16:17:58.235440+00:00
 -->

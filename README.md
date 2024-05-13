@@ -21,7 +21,7 @@ Please access the FedPredict [documentation](https://claudiocapanema.github.io/f
 
 It is better working with the **prediction stage**. See the comparison below!
 
-![](./contribu.jpeg)
+![](docs/images/contribu.jpeg)
 
 ## How it works?
 
@@ -31,7 +31,7 @@ the evolution level (el) of the global model, the update level (ul) of the local
 similarity (s) between the old data (i.e., the one in which the model was previously trained) and 
 the recently acquired data). Then, the client uses the combined model to make predictions over the test/val data.
 
-![](./fedpredictv5.jpeg)
+![](docs/images/fedpredictv5.jpeg)
 
 ## Benefits
 
@@ -50,7 +50,7 @@ Just plug and play!
 ## Installation
 
 FedPredict is compatible with Python>=3.8 and is tested on the latest versions of Ubuntu.
-With your virtual environment opened, if you are using **torch** type the following command to install FedPredict from Pypi:
+With your virtual environment opened, if you are using **Torch** type the following command to install FedPredict from Pypi:
 
 ```python
     pip install fedpredict[torch]
@@ -67,18 +67,19 @@ If you are using **Flower** for FL simulation, type:
 In general, if your solution shares some level of similarity with FedAvg, then FedPredict is ready to use.
 The requirements are described as follows:
 
-
-1. **Sharing all layers**. The clients have to upload all model layers at every round so the server can aggregate a global model that can be directly leveraged by a new client, as in FedAvg.
-2. **Same model structure**. The layers of the global and local models have to have the same shape to allow the combination of parameters.
-3.  **Predicting using the combined model**. On the client side, the original method has to be flexible enough to make predictions based on the combined model; otherwise, the plugin will have no effect.
+| Requirement | Description                                                                                                                                                        |
+| :- |:-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Sharing all layers | The clients have to upload all model layers at every round so the server can aggregate a global model that can be directly leveraged by a new client, as in FedAvg |
+| Same model structure | The layers of the global and local models have to have the same shape to allow the combination of parameters                                                       |
+| Predicting using the combined model | On the client side, the original method has to be flexible enough to make predictions based on the combined model; otherwise, the plugin will have no effect       |
 
 ## Components
 
 Our solution has two main components: FedPredict client and FedPredict server. Their objectives are described below:
 
-| Components        |                                                      Objetive                                                       | 
-|:------------------|:-------------------------------------------------------------------------------------------------------------------:|
-| FedPredict Client |               Transfer the knowledge from the updated global model to the client's stale local model                |
+| Components        | Objective                                                                                                           | 
+|:------------------|:--------------------------------------------------------------------------------------------------------------------|
+| FedPredict Client | Transfer the knowledge from the updated global model to the client's stale local model                              |
 | FedPredict server | Compresses the updated global model parameters to further send to the clients. Used together with FedPredict client |
 
 ### Citing

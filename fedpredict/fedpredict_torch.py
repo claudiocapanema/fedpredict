@@ -233,15 +233,9 @@ def fedpredict_client_traditional_torch(local_model: torch.nn.Module,
         if os.path.exists(filename):
             # Load local parameters to 'self.model'
             local_model.load_state_dict(torch.load(filename))
-            local_model = fedpredict_combine_models(global_model, local_model, t, T, nt, M)
-        else:
-            if not knowledge_distillation:
-                for old_param, new_param in zip(local_model.parameters(), global_model):
-                    old_param.data = new_param.data.clone()
-            else:
-                local_model.new_client = True
-                for old_param, new_param in zip(local_model.student.parameters(), global_model):
-                    old_param.data = new_param.data.clone()
+
+        local_model = local_model.to('cpu')
+        local_model = fedpredict_combine_models(global_model, local_model, t, T, nt, M, knowledge_distillation)
 
         return local_model
 
@@ -352,19 +346,31 @@ def decompress_global_parameters(compressed_global_model_parameters, model_shape
         print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
 
 
-def fedpredict_combine_models(global_parameters, model, t, T, nt, M):
+def fedpredict_combine_models(global_parameters, model, t, T, nt, M, knowledge_distillation):
     try:
 
         local_model_weights, global_model_weight = fedpredict_core(t, T, nt)
         count = 0
-        for new_param, old_param in zip(global_parameters, model.parameters()):
-            if count in M:
-                if new_param.shape == old_param.shape:
-                    old_param.data = (
-                            global_model_weight * new_param.data.clone() + local_model_weights * old_param.data.clone())
-                else:
-                    print("Not combined, CNN student: ", new_param.shape, " CNN 3 proto: ", old_param.shape)
-            count += 1
+        if knowledge_distillation:
+            for old_param, new_param in zip(model.student.parameters(), global_parameters):
+                if count in M:
+                    if new_param.shape == old_param.shape:
+                        old_param.data = (
+                                global_model_weight * new_param.data.clone() + local_model_weights * old_param.data.clone())
+                    else:
+                        print("Not combined, CNN student: ", new_param.shape, " CNN 3 proto: ", old_param.shape)
+                count += 1
+        else:
+            for new_param, old_param in zip(global_parameters, model.parameters()):
+                if count in M:
+                    if new_param.shape == old_param.shape:
+                        old_param.data = (
+                                global_model_weight * new_param.data.clone() + local_model_weights * old_param.data.clone())
+                    else:
+                        print("Not combined, CNN student: ", new_param.shape, " CNN 3 proto: ", old_param.shape)
+                count += 1
+
+        print("count: ", count)
 
         return model
 
