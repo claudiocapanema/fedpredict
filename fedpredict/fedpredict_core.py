@@ -25,8 +25,8 @@ else:
     _has_flwr = True
 
 NDArray = npt.NDArray[Any]
-NDArrayInt = npt.NDArray[np.int_]
-NDArrayFloat = npt.NDArray[np.float_]
+NDArrayInt = npt.NDArray[np.int8]
+NDArrayFloat = npt.NDArray[np.float32]
 NDArrays = List[NDArray]
 
 
@@ -419,10 +419,24 @@ def per(first_round, parameters):
         print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
 
 
-def fedpredict_core(t, T, nt):
+def fedpredict_core(t, T, nt, fc, imbalance_level):
     try:
 
-        # 9
+        # # 99 bom com alpha 1.0 e 0.1
+        # if fc > 0.94:
+        # # if fc > 0.94 and imbalance_level < 0.4:
+        #     global_model_weight = 1
+        # else:
+        #     global_model_weight = 0
+        #
+        # global_model_weight = 1
+
+        # pior do que 99 com alpha 1.0 e 0.1
+        # global_model_weight = 0
+
+
+
+
         if nt == 0:
             global_model_weight = 0
         elif nt == t:
@@ -430,14 +444,15 @@ def fedpredict_core(t, T, nt):
         else:
             update_level = 1 / nt
             evolution_level = t / T
-            eq1 = (-update_level - evolution_level)
+            eq1 = (- evolution_level-update_level)
+            # print("so evolution level")
             eq2 = round(np.exp(eq1), 6)
             global_model_weight = eq2
 
         local_model_weights = 1 - global_model_weight
 
-        # print("rodada: ", t, " rounds sem fit: ", nt, "\npeso global: ", global_model_weight, " peso local: ",
-        #       local_model_weights)
+        print("rodada: ", t, " rounds sem fit: ", nt, "\npeso global: ", global_model_weight, " peso local: ",
+              local_model_weights)
 
         return local_model_weights, global_model_weight
 

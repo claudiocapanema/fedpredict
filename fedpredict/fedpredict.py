@@ -38,8 +38,8 @@ import numpy as np
 import numpy.typing as npt
 
 NDArray = npt.NDArray[Any]
-NDArrayInt = npt.NDArray[np.int_]
-NDArrayFloat = npt.NDArray[np.float_]
+NDArrayInt = npt.NDArray[np.int8]
+NDArrayFloat = npt.NDArray[np.float32]
 NDArrays = List[NDArray]
 
 

@@ -10,6 +10,7 @@ from fedpredict.fedpredict_core import CKA, fedpredict_core, fedpredict_dynamic_
 
 import math
 import torch
+import torch.nn as nn
 
 try:
     import flwr
@@ -34,8 +35,8 @@ import numpy as np
 import numpy.typing as npt
 
 NDArray = npt.NDArray[Any]
-NDArrayInt = npt.NDArray[np.int_]
-NDArrayFloat = npt.NDArray[np.float_]
+NDArrayInt = npt.NDArray[np.int8]
+NDArrayFloat = npt.NDArray[np.float32]
 NDArrays = List[NDArray]
 
 # ===========================================================================================
@@ -80,6 +81,7 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
                             t: int,
                             T: int,
                             nt: int,
+                            device="cpu",
                             M: List=[],
                             similarity: float=1,
                             fraction_of_classes: float=-1,
@@ -87,7 +89,9 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
                             current_proportion: List[float]=[],
                             knowledge_distillation=False,
                             decompress=False,
-                            dynamic=False) -> torch.nn.Module:
+                            dynamic=False,
+                            fc=1,
+                            imbalance_level=1) -> torch.nn.Module:
     """
     This function includes two versions of FedPredict.
 
@@ -142,7 +146,8 @@ Returns: torch.nn.Module
         if not _has_torch:
             raise ValueError("Framework 'torch' not found")
 
-        device = [i for i in local_model.parameters()][0].device
+        local_model = copy.deepcopy(local_model)
+        global_model = copy.deepcopy(global_model)
 
         if not dynamic or len(current_proportion) > 0 or fraction_of_classes==-1:
 
@@ -151,10 +156,13 @@ Returns: torch.nn.Module
                                                        t=t,
                                                        T=T,
                                                        nt=nt,
+                                                        device=device,
                                                        M=M,
                                                        filename=filename,
                                                        knowledge_distillation=knowledge_distillation,
-                                                       decompress=decompress)
+                                                       decompress=decompress,
+                                                        fc=fc,
+                                                        imbalance_level=imbalance_level)
 
         else:
 
@@ -184,10 +192,13 @@ def fedpredict_client_traditional_torch(local_model: torch.nn.Module,
                                         t: int,
                                         T: int,
                                         nt: int,
+                                        device='cpu',
                                         M: List=[],
                                         filename: str='',
                                         knowledge_distillation=False,
-                                        decompress=False) -> torch.nn.Module:
+                                        decompress=False,
+                                        fc=1,
+                                        imbalance_level=1) -> torch.nn.Module:
     """
         FedPredict v.1 presented in https://ieeexplore.ieee.org/abstract/document/10257293
         This method combines global and local parameters, providing both generalization and personalization.
@@ -214,33 +225,40 @@ def fedpredict_client_traditional_torch(local_model: torch.nn.Module,
         """
     # Using 'torch.load'
     try:
-        if knowledge_distillation:
-            model_shape = [i.detach().cpu().numpy().shape for i in local_model.student.parameters()]
-        else:
-            model_shape = [i.detach().cpu().numpy().shape for i in local_model.parameters()]
-        if type(global_model) != list:
-            global_model = torch_to_list_of_numpy(global_model)
-        if len(M) == 0:
-            M = [i for i in range(len(global_model))]
+        # if knowledge_distillation:
+        #     model_shape = [i.detach().cpu().numpy().shape for i in local_model.student.parameters()]
+        # else:
+        #     model_shape = [i.detach().cpu().numpy().shape for i in local_model.parameters()]
+        # # if type(global_model) != list:
+        # #     global_model = torch_to_list_of_numpy(global_model)
+        # if len(M) == 0:
+        #     M = [i for i in range(len(torch_to_list_of_numpy(global_model)))]
+        number_of_layers_local_model = count_layers(local_model)
+        number_of_layers_global_model = count_layers(global_model)
+        M = [i for i in range(number_of_layers_local_model)]
         # print("comprimido: ", len(model_shape))
-        global_model = decompress_global_parameters(global_model, model_shape, M, decompress)
+        # global_model = decompress_global_parameters(global_model, model_shape, M, decompress)
+        global_model = global_model.to(device)
+        local_model = local_model.to(device)
         # print("shape modelo: ", model_shape)
         # print("descomprimido: ", [i.shape for i in global_model])
 
-        if len(global_model) != len(M):
+        if number_of_layers_local_model != number_of_layers_global_model:
             raise Exception("""Lenght of parameters of the global model is {} and is different from the M {}""".format(len(global_model), len(M)))
 
         if os.path.exists(filename):
             # Load local parameters to 'self.model'
             local_model.load_state_dict(torch.load(filename))
 
-        local_model = local_model.to('cpu')
-        local_model = fedpredict_combine_models(global_model, local_model, t, T, nt, M, knowledge_distillation)
+        local_model = local_model.to(device)
+        print("projeto local")
+        local_model = fedpredict_combine_models(global_model, local_model, t, T, nt, M, knowledge_distillation, fc, imbalance_level)
+        local_model = local_model.to(device)
 
         return local_model
 
     except Exception as e:
-        print("FedPredict client traditional")
+        print("FedPredict client traditional torch")
         print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
 
 
@@ -283,19 +301,16 @@ def fedpredict_client_dynamic_torch(local_model: torch.nn.Module,
     """
     # Using 'torch.load'
     try:
+        number_of_layers_local_model = count_layers(local_model)
+        number_of_layers_global_model = count_layers(global_model)
+        M = [i for i in range(number_of_layers_local_model)]
+        # print("comprimido: ", len(model_shape))
+        # global_model = decompress_global_parameters(global_model, model_shape, M, decompress)
+        global_model = global_model.to("cuda")
+        # print("shape modelo: ", model_shape)
+        # print("descomprimido: ", [i.shape for i in global_model])
 
-        if knowledge_distillation:
-            model_shape = [i.detach().cpu().numpy().shape for i in local_model.student.parameters()]
-        else:
-            model_shape = [i.detach().cpu().numpy().shape for i in local_model.parameters()]
-        print("a d: ", type(global_model))
-        if type(global_model) != list:
-            global_model = torch_to_list_of_numpy(global_model)
-        if len(M) == 0:
-            M = [i for i in range(len(global_model))]
-        global_model = decompress_global_parameters(global_model, model_shape, M, decompress)
-
-        if len(global_model) != len(M):
+        if number_of_layers_local_model != number_of_layers_global_model:
             raise Exception("""Lenght of parameters of the global model is {} and is different from the M {}""".format(
                 len(global_model), len(M)))
 
@@ -307,13 +322,8 @@ def fedpredict_client_dynamic_torch(local_model: torch.nn.Module,
                                                             similarity, fraction_of_classes)
         else:
             # print("usar modelo global: ", cid)
-            if not knowledge_distillation:
-                for old_param, new_param in zip(local_model.parameters(), global_model):
-                    old_param.data = new_param.data.clone()
-            else:
-                local_model.new_client = True
-                for old_param, new_param in zip(local_model.student.parameters(), global_model):
-                    old_param.data = new_param.data.clone()
+            local_model = fedpredict_dynamic_combine_models(global_model, local_model, t, T, nt, M,
+                                                            similarity, fraction_of_classes)
 
         return local_model
 
@@ -346,10 +356,12 @@ def decompress_global_parameters(compressed_global_model_parameters, model_shape
         print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
 
 
-def fedpredict_combine_models(global_parameters, model, t, T, nt, M, knowledge_distillation):
+def fedpredict_combine_models(global_parameters, model, t, T, nt, M, knowledge_distillation, fc, imbalance_level):
     try:
 
-        local_model_weights, global_model_weight = fedpredict_core(t, T, nt)
+        local_model_weights, global_model_weight = fedpredict_core(t, T, nt, fc, imbalance_level)
+        # global_model_weight = 1
+        # local_model_weights = 0
         count = 0
         if knowledge_distillation:
             for old_param, new_param in zip(model.student.parameters(), global_parameters):
@@ -361,13 +373,13 @@ def fedpredict_combine_models(global_parameters, model, t, T, nt, M, knowledge_d
                         print("Not combined, CNN student: ", new_param.shape, " CNN 3 proto: ", old_param.shape)
                 count += 1
         else:
-            for new_param, old_param in zip(global_parameters, model.parameters()):
-                if count in M:
-                    if new_param.shape == old_param.shape:
-                        old_param.data = (
-                                global_model_weight * new_param.data.clone() + local_model_weights * old_param.data.clone())
-                    else:
-                        print("Not combined, CNN student: ", new_param.shape, " CNN 3 proto: ", old_param.shape)
+            for new_param, old_param in zip(global_parameters.parameters(), model.parameters()):
+                # if count in M:
+                if new_param.shape == old_param.shape:
+                    old_param.data = (
+                            global_model_weight * new_param.data.clone() + local_model_weights * old_param.data.clone())
+                else:
+                    print("Not combined, CNN student: ", new_param.shape, " CNN 3 proto: ", old_param.shape)
                 count += 1
 
         print("count: ", count)
@@ -384,7 +396,7 @@ def fedpredict_dynamic_combine_models(global_parameters, model, t, T, nt, M, sim
 
         local_model_weights, global_model_weight = fedpredict_dynamic_core(t, T, nt, similarity, fraction_of_classes)
         count = 0
-        for new_param, old_param in zip(global_parameters, model.parameters()):
+        for new_param, old_param in zip(global_parameters.parameters(), model.parameters()):
             if count in M:
                 if new_param.shape == old_param.shape:
                     old_param.data = (
@@ -398,3 +410,10 @@ def fedpredict_dynamic_combine_models(global_parameters, model, t, T, nt, M, sim
     except Exception as e:
         print("FedPredict dynamic combine models")
         print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
+
+def count_layers(model):
+    contador = 0
+    for nome, modulo in model.named_modules():
+        # Contar apenas módulos que são instâncias de camadas com parâmetros (Linear, Conv2d, etc.)
+        contador += 1
+    return contador
