@@ -419,7 +419,7 @@ def per(first_round, parameters):
         print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
 
 
-def fedpredict_core(t, T, nt, fc, imbalance_level):
+def fedpredict_core(t, T, nt, fc, il):
     try:
 
         # # 99 bom com alpha 1.0 e 0.1
@@ -445,14 +445,13 @@ def fedpredict_core(t, T, nt, fc, imbalance_level):
             update_level = 1 / nt
             evolution_level = t / T
             eq1 = (- evolution_level-update_level)
-            # print("so evolution level")
             eq2 = round(np.exp(eq1), 6)
             global_model_weight = eq2
 
         local_model_weights = 1 - global_model_weight
 
-        print("rodada: ", t, " rounds sem fit: ", nt, "\npeso global: ", global_model_weight, " peso local: ",
-              local_model_weights)
+        # print("rodada: ", t, " rounds sem fit: ", nt, "\npeso global: ", global_model_weight, " peso local: ",
+        #       local_model_weights)
 
         return local_model_weights, global_model_weight
 

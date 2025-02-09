@@ -1,6 +1,5 @@
 import sys
 import copy
-import numpy as np
 from .utils.compression_methods.parameters_svd import parameter_svd_write, inverse_parameter_svd_reading, if_reduces_size
 from .utils.compression_methods.sparsification import sparse_crs_top_k, to_dense, sparse_matrix, get_not_zero_values
 from .utils.compression_methods.fedkd import fedkd_compression
@@ -8,20 +7,18 @@ import os
 
 from fedpredict.fedpredict_core import CKA, fedpredict_core, fedpredict_dynamic_core, fedpredict_core_compredict, fedpredict_core_layer_selection
 
-import math
 import torch
-import torch.nn as nn
 
-try:
-    import flwr
-    from flwr.common import (
-        EvaluateIns,
-        ndarrays_to_parameters,
-    )
-except ImportError:
-    _has_flwr = False
-else:
-    _has_flwr = True
+# try:
+#     import flwr
+#     from flwr.common import (
+#         EvaluateIns,
+#         ndarrays_to_parameters,
+#     )
+# except ImportError:
+#     _has_flwr = False
+# else:
+#     _has_flwr = True
 try:
     import torch
 except ImportError:
@@ -84,14 +81,13 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
                             device="cpu",
                             M: List=[],
                             similarity: float=1,
-                            fraction_of_classes: float=-1,
-                            filename: str='',
+                            fc: float=None,
+                            il: float=None,
                             current_proportion: List[float]=[],
                             knowledge_distillation=False,
                             decompress=False,
-                            dynamic=False,
-                            fc=1,
-                            imbalance_level=1) -> torch.nn.Module:
+                            dynamic=False
+                            )-> torch.nn.Module:
     """
     This function includes two versions of FedPredict.
 
@@ -121,18 +117,18 @@ Args:
     similarity: float, optional. Default=1. Used when Dynamic=True.
         The similarity between the old data (i.e., the one that the local model was previously trained on) and the new
         data.Note that s \in [0, 1].
-    fraction_of_classes: float, optional. Default=-1. Used when Dynamic=True.
+    fc: float, optional. Default=-1. Used when Dynamic=True.
         The fraction of classes in the local data.
-    filename: str, optional. Default=''
-        The filename where the local model is saved.
+    il: float, optional. Default=None.
+        The imbalance level of local data.
     knowledge_distillation: bool, optional. Default=False
         If the model has knowledge distillation, then set True, to indicate that the global model parameters have
         to be combined with the student model
+    dynamic: bool, optional. Default=False
+         If True, it uses the FedPredict dynamic. If False, it uses the traditional FedPredict.
     decompress: bool, optional. Default=False
         Whether or not to decompress global model parameters in case a previous compression was applied. Only set
         True if using "FedPredict_server" and compressing the shared parameters.
-     dynamic: bool, optional. Default=False
-         If True, it uses the FedPredict dynamic. If False, it uses the traditional FedPredict.
 
 Returns: torch.nn.Module
     The combined model
@@ -149,35 +145,33 @@ Returns: torch.nn.Module
         local_model = copy.deepcopy(local_model)
         global_model = copy.deepcopy(global_model)
 
-        if not dynamic or len(current_proportion) > 0 or fraction_of_classes==-1:
+        if not dynamic or len(current_proportion) > 0 or fc==-1:
 
             combined_local_model = fedpredict_client_traditional_torch(local_model=local_model,
-                                                       global_model=global_model,
-                                                       t=t,
-                                                       T=T,
-                                                       nt=nt,
-                                                        device=device,
-                                                       M=M,
-                                                       filename=filename,
-                                                       knowledge_distillation=knowledge_distillation,
-                                                       decompress=decompress,
-                                                        fc=fc,
-                                                        imbalance_level=imbalance_level)
+                                                                       global_model=global_model,
+                                                                       t=t,
+                                                                       T=T,
+                                                                       nt=nt,
+                                                                       device=device,
+                                                                       M=M,
+                                                                       knowledge_distillation=knowledge_distillation,
+                                                                       decompress=decompress,
+                                                                       fc=fc,
+                                                                       il=il)
 
         else:
 
             combined_local_model = fedpredict_client_dynamic_torch(local_model=local_model,
-                                                   global_model=global_model,
-                                                   current_proportion=current_proportion,
-                                                   t=t,
-                                                   T=T,
-                                                   nt=nt,
-                                                   M=M,
-                                                   similarity=similarity,
-                                                   fraction_of_classes=fraction_of_classes,
-                                                   filename=filename,
-                                                   knowledge_distillation=knowledge_distillation,
-                                                   decompress=decompress)
+                                                                   global_model=global_model,
+                                                                   current_proportion=current_proportion,
+                                                                   t=t,
+                                                                   T=T,
+                                                                   nt=nt,
+                                                                   M=M,
+                                                                   similarity=similarity,
+                                                                   fraction_of_classes=fc,
+                                                                   knowledge_distillation=knowledge_distillation,
+                                                                   decompress=decompress)
 
         return combined_local_model.to(device)
 
@@ -187,18 +181,16 @@ Returns: torch.nn.Module
 
 
 def fedpredict_client_traditional_torch(local_model: torch.nn.Module,
-                                        global_model: Union[torch.nn.Module,
-                                        List[NDArrays]],
+                                        global_model: Union[torch.nn.Module, List[NDArrays]],
                                         t: int,
                                         T: int,
                                         nt: int,
-                                        device='cpu',
+                                        device: str,
                                         M: List=[],
-                                        filename: str='',
                                         knowledge_distillation=False,
                                         decompress=False,
-                                        fc=1,
-                                        imbalance_level=1) -> torch.nn.Module:
+                                        fc=1.,
+                                        il=1.) -> torch.nn.Module:
     """
         FedPredict v.1 presented in https://ieeexplore.ieee.org/abstract/document/10257293
         This method combines global and local parameters, providing both generalization and personalization.
@@ -211,7 +203,6 @@ def fedpredict_client_traditional_torch(local_model: torch.nn.Module,
             nt: int, required
             M: list, optional. Default
                 The list of the indexes of the shared global model layers
-            filename: str, optional. Default=''
             knowledge_distillation: bool, optional. Default=False
                 If the model has knowledge distillation, then set True, to indicate that the global model parameters have
                 to be combined with the student model
@@ -246,13 +237,9 @@ def fedpredict_client_traditional_torch(local_model: torch.nn.Module,
         if number_of_layers_local_model != number_of_layers_global_model:
             raise Exception("""Lenght of parameters of the global model is {} and is different from the M {}""".format(len(global_model), len(M)))
 
-        if os.path.exists(filename):
-            # Load local parameters to 'self.model'
-            local_model.load_state_dict(torch.load(filename))
 
         local_model = local_model.to(device)
-        print("projeto local")
-        local_model = fedpredict_combine_models(global_model, local_model, t, T, nt, M, knowledge_distillation, fc, imbalance_level)
+        local_model = fedpredict_combine_models(global_model, local_model, t, T, nt, M, knowledge_distillation, fc, il)
         local_model = local_model.to(device)
 
         return local_model
@@ -272,7 +259,6 @@ def fedpredict_client_dynamic_torch(local_model: torch.nn.Module,
                                     M:List,
                                     similarity: float,
                                     fraction_of_classes: float,
-                                    filename: str='',
                                     knowledge_distillation=False,
                                     decompress=False) -> torch.nn.Module:
     """
@@ -314,15 +300,7 @@ def fedpredict_client_dynamic_torch(local_model: torch.nn.Module,
             raise Exception("""Lenght of parameters of the global model is {} and is different from the M {}""".format(
                 len(global_model), len(M)))
 
-        if os.path.exists(filename):
-            # Load local parameters to 'self.model'
-            # print("existe modelo local")
-            local_model.load_state_dict(torch.load(filename))
-            local_model = fedpredict_dynamic_combine_models(global_model, local_model, t, T, nt, M,
-                                                            similarity, fraction_of_classes)
-        else:
-            # print("usar modelo global: ", cid)
-            local_model = fedpredict_dynamic_combine_models(global_model, local_model, t, T, nt, M,
+        local_model = fedpredict_dynamic_combine_models(global_model, local_model, t, T, nt, M,
                                                             similarity, fraction_of_classes)
 
         return local_model
@@ -356,10 +334,10 @@ def decompress_global_parameters(compressed_global_model_parameters, model_shape
         print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
 
 
-def fedpredict_combine_models(global_parameters, model, t, T, nt, M, knowledge_distillation, fc, imbalance_level):
+def fedpredict_combine_models(global_parameters, model, t, T, nt, M, knowledge_distillation, fc, il):
     try:
 
-        local_model_weights, global_model_weight = fedpredict_core(t, T, nt, fc, imbalance_level)
+        local_model_weights, global_model_weight = fedpredict_core(t, T, nt, fc, il)
         # global_model_weight = 1
         # local_model_weights = 0
         count = 0
@@ -375,14 +353,15 @@ def fedpredict_combine_models(global_parameters, model, t, T, nt, M, knowledge_d
         else:
             for new_param, old_param in zip(global_parameters.parameters(), model.parameters()):
                 # if count in M:
-                if new_param.shape == old_param.shape:
+                if new_param.shape == old_param.shape and count in M:
                     old_param.data = (
                             global_model_weight * new_param.data.clone() + local_model_weights * old_param.data.clone())
                 else:
-                    print("Not combined, CNN student: ", new_param.shape, " CNN 3 proto: ", old_param.shape)
+                    # print("Not combined, CNN student: ", new_param.shape, " CNN 3 proto: ", old_param.shape)
+                    pass
                 count += 1
 
-        print("count: ", count)
+        # print("count: ", count)
 
         return model
 

@@ -1,7 +1,6 @@
 import numpy as np
 # from bitstring import BitArray
 import sys
-import flwr
 
 
 def quantize_linear_symmetric(value, bits):

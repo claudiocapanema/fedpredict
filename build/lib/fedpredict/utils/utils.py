@@ -8,7 +8,6 @@ from fedpredict.utils.compression_methods.sparsification import sparse_crs_top_k
 from fedpredict.utils.compression_methods.fedkd import fedkd_compression
 import os
 from scipy.stats import entropy
-import scipy.stats as st
 
 import math
 import torch
