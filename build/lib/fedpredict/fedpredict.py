@@ -39,7 +39,7 @@ import numpy.typing as npt
 
 NDArray = npt.NDArray[Any]
 NDArrayInt = npt.NDArray[np.int_]
-NDArrayFloat = npt.NDArray[np.float_]
+NDArrayFloat = npt.NDArray[np.float32]
 NDArrays = List[NDArray]
 
 
