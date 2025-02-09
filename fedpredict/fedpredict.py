@@ -9,16 +9,16 @@ import os
 import math
 import torch
 
-try:
-    import flwr
-    from flwr.common import (
-        EvaluateIns,
-        ndarrays_to_parameters,
-    )
-except ImportError:
-    _has_flwr = False
-else:
-    _has_flwr = True
+# try:
+#     import flwr
+#     from flwr.common import (
+#         EvaluateIns,
+#         ndarrays_to_parameters,
+#     )
+# except ImportError:
+#     _has_flwr = False
+# else:
+#     _has_flwr = True
 try:
     import torch
 except ImportError:
