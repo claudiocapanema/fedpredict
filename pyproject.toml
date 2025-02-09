@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fedpredict"
-version = "0.0.8"
+version = "0.0.9"
 authors = [
     { name="Cláudio G. S. Capanema", email="claudiogs.capanema@gmail.com" },
 ]
@@ -28,13 +28,9 @@ torch = [
 tf = [
     "tensorflow>=2.12"
 ]
-flwr = [
-    "flwr>=1.7.0"
-]
 full = [
     "torch>=2.2.0",
     "tensorflow>=2.12",
-    "flwr>=1.7.0"
 ]
 
 
