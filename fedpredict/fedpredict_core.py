@@ -434,12 +434,11 @@ def fedpredict_core(t, T, nt, fc, il):
         # pior do que 99 com alpha 1.0 e 0.1
         # global_model_weight = 0
 
-
-
-
         if nt == 0:
             global_model_weight = 0
-        elif nt == t:
+        elif nt == t or (fc == 1):
+            global_model_weight = 1
+        elif fc is not None and il is not None and (fc > 0.94 and il < 0.4):
             global_model_weight = 1
         else:
             update_level = 1 / nt
@@ -470,6 +469,8 @@ def fedpredict_dynamic_core(t, T, nt, similarity, fc, il):
         elif nt == t or (fc == 1):
             global_model_weight = 1
         elif similarity != 1:
+            global_model_weight = 1
+        elif fc is not None and il is not None and (fc > 0.94 and il < 0.4):
             global_model_weight = 1
         else:
             update_level = 1 / nt
