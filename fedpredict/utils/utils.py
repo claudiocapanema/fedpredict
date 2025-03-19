@@ -1,18 +1,25 @@
 import sys
 import copy
 import numpy as np
-from sklearn.metrics.pairwise import cosine_similarity, euclidean_distances
+from numpy.linalg import norm
 from fedpredict.utils.compression_methods.parameters_svd import parameter_svd_write, inverse_parameter_svd_reading, if_reduces_size
 from fedpredict.utils.compression_methods.sparsification import client_model_non_zero_indexes, client_specific_top_k_parameters
 from fedpredict.utils.compression_methods.sparsification import sparse_crs_top_k, to_dense, sparse_matrix, get_not_zero_values
 from fedpredict.utils.compression_methods.fedkd import fedkd_compression
 import os
-from scipy.stats import entropy
 
 import math
 import torch
 import numpy as np
 
+def cosine_similarity(p_1, p_2):
+
+    # compute cosine similarity
+    try:
+        return np.dot(p_1, p_2) / (norm(p_1) * norm(p_2))
+    except Exception as e:
+        print("cosine_similairty error")
+        print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
 
 class CKA(object):
     def __init__(self):

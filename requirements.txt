@@ -25,7 +25,6 @@ nvidia-nvtx-cu12==12.1.105
 protobuf==4.25.2
 pycparser==2.21
 pycryptodome==3.20.0
-scipy==1.12.0
 sympy==1.12
 torch==2.2.0
 triton==2.2.0
