@@ -468,8 +468,8 @@ def fedpredict_dynamic_core(t, T, nt, similarity, fc, il):
             global_model_weight = 0
         elif nt == t or (fc == 1):
             global_model_weight = 1
-        elif similarity != 1:
-            global_model_weight = 1
+        # elif similarity != 1:
+        #     global_model_weight = 1
         elif fc is not None and il is not None and (fc > 0.94 and il < 0.4):
             global_model_weight = 1
         else:
