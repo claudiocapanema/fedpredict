@@ -169,7 +169,8 @@ Returns: torch.nn.Module
                                                                    nt=nt,
                                                                    M=M,
                                                                    similarity=similarity,
-                                                                   fraction_of_classes=fc,
+                                                                   fc=fc,
+                                                                   il=il,
                                                                    knowledge_distillation=knowledge_distillation,
                                                                    decompress=decompress)
 
@@ -250,15 +251,15 @@ def fedpredict_client_traditional_torch(local_model: torch.nn.Module,
 
 
 def fedpredict_client_dynamic_torch(local_model: torch.nn.Module,
-                                    global_model: Union[torch.nn.Module,
-                                    List[NDArrays]],
+                                    global_model: Union[torch.nn.Module, List[NDArrays]],
                                     current_proportion: List[float],
                                     t: int,
                                     T: int,
                                     nt: int,
                                     M:List,
                                     similarity: float,
-                                    fraction_of_classes: float,
+                                    fc: float,
+                                    il: float,
                                     knowledge_distillation=False,
                                     decompress=False) -> torch.nn.Module:
     """
@@ -301,7 +302,7 @@ def fedpredict_client_dynamic_torch(local_model: torch.nn.Module,
                 len(global_model), len(M)))
 
         local_model = fedpredict_dynamic_combine_models(global_model, local_model, t, T, nt, M,
-                                                            similarity, fraction_of_classes)
+                                                            similarity, fc, il)
 
         return local_model
 
@@ -370,10 +371,10 @@ def fedpredict_combine_models(global_parameters, model, t, T, nt, M, knowledge_d
         print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
 
 
-def fedpredict_dynamic_combine_models(global_parameters, model, t, T, nt, M, similarity, fraction_of_classes):
+def fedpredict_dynamic_combine_models(global_parameters, model, t, T, nt, M, similarity, fc, il):
     try:
 
-        local_model_weights, global_model_weight = fedpredict_dynamic_core(t, T, nt, similarity, fraction_of_classes)
+        local_model_weights, global_model_weight = fedpredict_dynamic_core(t, T, nt, similarity, fc, il)
         count = 0
         for new_param, old_param in zip(global_parameters.parameters(), model.parameters()):
             if count in M:

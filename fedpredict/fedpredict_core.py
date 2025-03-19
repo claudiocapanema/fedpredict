@@ -460,14 +460,14 @@ def fedpredict_core(t, T, nt, fc, il):
         print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
 
 
-def fedpredict_dynamic_core(t, T, nt, similarity, fraction_of_classes):
+def fedpredict_dynamic_core(t, T, nt, similarity, fc, il):
     try:
         print("fedpredict_dynamic_core rodada: ", t, "local classes: ", similarity)
         similarity = float(np.round(similarity, 1))
 
         if nt == 0:
             global_model_weight = 0
-        elif nt == t or (fraction_of_classes == 1):
+        elif nt == t or (fc == 1):
             global_model_weight = 1
         elif similarity != 1:
             global_model_weight = 1
