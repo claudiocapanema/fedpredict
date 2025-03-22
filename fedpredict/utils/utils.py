@@ -19,7 +19,7 @@ def cosine_similarity(p_1, p_2):
         return np.dot(p_1, p_2) / (norm(p_1) * norm(p_2))
     except Exception as e:
         print("cosine_similairty error")
-        print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
+        print("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 class CKA(object):
     def __init__(self):
