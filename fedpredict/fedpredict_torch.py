@@ -174,8 +174,8 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
         #                                                                fc=fc,
         #                                                                il=il)
 
-        assert t > 0, f"t must be greater than 0, but you passed {t}"
-        assert (T > t and T >= 0), f"T must be greater than t, but you passed t: {t} and T: {T}"
+        assert t >= 0, f"t must be greater or equal than 0, but you passed {t}"
+        assert (T >= t and T >= 0), f"T must be greater than t, but you passed t: {t} and T: {T}"
         assert nt >= 0, f"nt must be greater than 0, but you passed {nt}"
         assert (s >= 0 and s <= 1), f"s must be between 0 and 1, but you passed {s}"
 
