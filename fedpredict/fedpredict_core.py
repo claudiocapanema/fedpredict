@@ -474,8 +474,7 @@ def fedpredict_dynamic_core(t, T, nt, s=1, fc=None, il=None, dh=None, ps=None, l
             eq1 = (-update_level - evolution_level) * s
             eq2 = round(np.exp(eq1), 6)
             global_model_weight = eq2
-        # elif similarity != 1:
-        #     global_model_weight = 1
+
         if fc is not None and il is not None and dh is not None and ps is not None:
             if (fc["global"] > fc["reference"] and il["global"] < il["reference"] and dh["global"] > dh[
                 "reference"]) and (nt > 0 and ps["global"] < ps["reference"] and dh["global"] > dh["reference"]):
