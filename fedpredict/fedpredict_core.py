@@ -459,19 +459,19 @@ def fedpredict_core(t, T, nt, fc, il):
         print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
 
 
-def fedpredict_dynamic_core(t, T, nt, s, fc, il, dh, ps, logs=False):
+def fedpredict_dynamic_core(t, T, nt, s=1, fc=None, il=None, dh=None, ps=None, logs=False):
     try:
-        print("fedpredict_dynamic_core rodada: ", t, "local classes: ", s)
         s = float(np.round(s, 1))
 
         if nt == 0:
             global_model_weight = 0
-        elif nt == t or (fc == 1):
+        elif nt == t:
             global_model_weight = 1
         # elif similarity != 1:
         #     global_model_weight = 1
         elif fc is not None and il is not None and dh is not None and ps is not None:
-            if (fc["global"] > fc["reference"] and il["global"] < il["reference"] and dh["global"] > dh["reference"]) and (nt > 0 and ps["global"] < ps["reference"] and dh["global"] > dh["reference"]):
+            if (fc["global"] > fc["reference"] and il["global"] < il["reference"] and dh["global"] > dh[
+                "reference"]) and (nt > 0 and ps["global"] < ps["reference"] and dh["global"] > dh["reference"]):
                 global_model_weight = 1
         else:
             update_level = 1 / nt

@@ -160,39 +160,56 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
         local_model = copy.deepcopy(local_model)
         global_model = copy.deepcopy(global_model)
 
-        if s is None and fc is None and il is None and dh is None and ps is None:
+        # if s is None and fc is None and il is None and dh is None and ps is None:
+        #
+        #     combined_local_model = fedpredict_client_traditional_torch(local_model=local_model,
+        #                                                                global_model=global_model,
+        #                                                                t=t,
+        #                                                                T=T,
+        #                                                                nt=nt,
+        #                                                                device=device,
+        #                                                                M=M,
+        #                                                                knowledge_distillation=knowledge_distillation,
+        #                                                                decompress=decompress,
+        #                                                                fc=fc,
+        #                                                                il=il)
 
-            combined_local_model = fedpredict_client_traditional_torch(local_model=local_model,
-                                                                       global_model=global_model,
-                                                                       t=t,
-                                                                       T=T,
-                                                                       nt=nt,
-                                                                       device=device,
-                                                                       M=M,
-                                                                       knowledge_distillation=knowledge_distillation,
-                                                                       decompress=decompress,
-                                                                       fc=fc,
-                                                                       il=il)
+        assert t > 0, f"t must be greater than 0, but you passed {t}"
+        assert (T > t and T >= 0), f"T must be greater than t, but you passed t: {t} and T: {T}"
+        assert nt >= 0, f"nt must be greater than 0, but you passed {nt}"
+        assert (s >= 0 and s <= 1), f"s must be between 0 and 1, but you passed {s}"
 
-        elif s is not None and fc is not None and il is not None and dh is not None and ps is not None:
+        if s == 1:
+            version = "Version 1: FedPredict"
+        elif s >= 0 and s < 1:
+            version = "Version 2: FedPredict-Dynamic"
 
-            combined_local_model = fedpredict_client_dynamic_torch(local_model=local_model,
-                                                                   global_model=global_model,
-                                                                   t=t,
-                                                                   T=T,
-                                                                   nt=nt,
-                                                                   M=M,
-                                                                   s=s,
-                                                                   fc=fc,
-                                                                   il=il,
-                                                                   dh=dh,
-                                                                   ps=ps,
-                                                                   knowledge_distillation=knowledge_distillation,
-                                                                   decompress=decompress,
-                                                                   logs=logs)
-        else:
-            raise ValueError(
-                f"Passed hyperparameters are not valid for the FedPredict versions. t: {t} T: {T} nt: {nt} s: {s} fc: {fc} il: {il} dh: {dh} ps: {ps}")
+        if fc is not None and il is not None and dh is not None and ps is not None:
+
+            assert s >= 0 and s <= 1 and fc["global"] >= 0 and fc["global"] <= 1 and fc["reference"] >= 0 and fc["reference"] <= 1 and il[
+                "global"] >= 0 and il["global"] <= 1 and ps["global"] >= 0 and ps["global"] <= 1 and ps[
+                       "reference"] >= 0 and ps["reference"] <= 1 and dh["global"] >= 0 and dh["global"] <= 1 and dh[
+                       "reference"] >= 0 and dh["reference"] <= 1, f"Metrics fc, il, dh, and ps must be between 0 and 1, but you passed {fc}, {il}, {dh}, and {ps}"
+
+            version = "Version 3: MultiFedPredict"
+
+        if logs:
+            print(f"Using {version}")
+
+        combined_local_model = fedpredict_client_versions_torch(local_model=local_model,
+                                                                global_model=global_model,
+                                                                t=t,
+                                                                T=T,
+                                                                nt=nt,
+                                                                M=M,
+                                                                s=s,
+                                                                fc=fc,
+                                                                il=il,
+                                                                dh=dh,
+                                                                ps=ps,
+                                                                knowledge_distillation=knowledge_distillation,
+                                                                decompress=decompress,
+                                                                logs=logs)
 
         return combined_local_model.to(device)
 
@@ -270,20 +287,20 @@ def fedpredict_client_traditional_torch(local_model: torch.nn.Module,
         print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
 
 
-def fedpredict_client_dynamic_torch(local_model: torch.nn.Module,
-                                    global_model: Union[torch.nn.Module, List[NDArrays]],
-                                    t: int,
-                                    T: int,
-                                    nt: int,
-                                    M:List,
-                                    s: float,
-                                    fc: dict[str, float] = None,
-                                    il: dict[str, float] = None,
-                                    dh: dict[str, float] = None,
-                                    ps: dict[str, float] = None,
-                                    knowledge_distillation=False,
-                                    decompress=False,
-                                    logs=False) -> torch.nn.Module:
+def fedpredict_client_versions_torch(local_model: torch.nn.Module,
+                                     global_model: Union[torch.nn.Module, List[NDArrays]],
+                                     t: int,
+                                     T: int,
+                                     nt: int,
+                                     M:List,
+                                     s: float,
+                                     fc: dict[str, float] = None,
+                                     il: dict[str, float] = None,
+                                     dh: dict[str, float] = None,
+                                     ps: dict[str, float] = None,
+                                     knowledge_distillation=False,
+                                     decompress=False,
+                                     logs=False) -> torch.nn.Module:
 
     # Using 'torch.load'
     try:
