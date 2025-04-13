@@ -80,58 +80,73 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
                             nt: int,
                             device="cpu",
                             M: List=[],
-                            similarity: float=1,
-                            fc: float=None,
-                            il: float=None,
-                            current_proportion: List[float]=[],
-                            knowledge_distillation=False,
-                            decompress=False,
-                            dynamic=False
+                            s: float=1,
+                            fc: dict[str,float]=None,
+                            il: dict[str,float]=None,
+                            dh: dict[str,float]=None,
+                            ps: dict[str,float]=None,
+                            knowledge_distillation:bool=False,
+                            decompress: bool=False,
+                            logs: bool=False
                             )-> torch.nn.Module:
     """
-    This function includes two versions of FedPredict.
+        This function includes three versions of FedPredict.
 
- Version 1: FedPredict presented in https://ieeexplore.ieee.org/abstract/document/10257293
-     Configuration: this version is the default.
-     This method combines global and local parameters, providing both generalization and personalization.
-     It also prevents the drop in the accuracy when new/untrained clients are evaluated
+         Version 1: FedPredict https://ieeexplore.ieee.org/abstract/document/10257293 and https://ieeexplore.ieee.org/abstract/document/10713874
+             Configuration: this version is the default.
+             This method combines global and local parameters, providing both generalization and personalization.
+             It also prevents the drop in the accuracy when new/untrained clients are evaluated
 
- Version 2: FedPredict-Dynamic
-     Configuration: set 'dynamic=True' and inform the hyperparameters 'similarity' and 'fraction_of_classes'.
-     This method has the same benefits as the v.1.
-     However, differently from v.1, in the model combination process, it takes into account the similarity between
-     the last and current datasets to weigh the combination and provide support for heterogeneous and
-     non-stationary/dynamic data.
-Args:
-    local_model: torch.nn.Module, required.
-    global_model: list[np.array], required.
-    current_proportion: list[float], required.
-    t: int, required.
-        The current round.
-    T: int, required.
-        The total rounds.
-    nt: int, required.
-        The number of rounds the client is without training.
-    M: list, optional. Default=[]
-        The list of indexes of the shared layers.
-    similarity: float, optional. Default=1. Used when Dynamic=True.
-        The similarity between the old data (i.e., the one that the local model was previously trained on) and the new
-        data.Note that s \in [0, 1].
-    fc: float, optional. Default=-1. Used when Dynamic=True.
-        The fraction of classes in the local data.
-    il: float, optional. Default=None.
-        The imbalance level of local data.
-    knowledge_distillation: bool, optional. Default=False
-        If the model has knowledge distillation, then set True, to indicate that the global model parameters have
-        to be combined with the student model
-    dynamic: bool, optional. Default=False
-         If True, it uses the FedPredict dynamic. If False, it uses the traditional FedPredict.
-    decompress: bool, optional. Default=False
-        Whether or not to decompress global model parameters in case a previous compression was applied. Only set
-        True if using "FedPredict_server" and compressing the shared parameters.
+         Version 2: FedPredict-Dynamic https://ieeexplore.ieee.org/abstract/document/10621488
+             Configuration: set 'dynamic=True' and inform the hyperparameters 'similarity' and 'fraction_of_classes'.
+             This method has the same benefits as the v.1.
+             However, differently from v.1, in the model combination process, it takes into account the similarity between
+             the last and current datasets to weigh the combination and provide support for heterogeneous and
+             non-stationary/dynamic data.
+         Version 3: MultiFedPredict
+            Usage:
+        Args:
+            local_model: torch.nn.Module, required.
+            global_model: list[np.array], required.
+            p: list[float], required.
+            t: int, required.
+                The current round.
+            T: int, required.
+                The total rounds.
+            nt: int, required.
+                The number of rounds the client is without training.
+            M: list, optional. Default=[]
+                The list of indexes of the shared layers.
+            s: float, optional. Default=1. Used when Dynamic=True.
+                The similarity between the old data (i.e., the one that the local model was previously trained on) and the new
+                data.Note that s \in [0, 1].
+            fc: dict[str,float], optional. Default=None. Used when Dynamic=True.
+                The fraction of classes in the data that generated the global model.
+                Example:
+                    fc = {'global': 0.5, 'reference': 0.5}
+            il: dict[str,float], optional. Default=None.
+                The imbalance level in the data that generated the global model.
+                Example:
+                    il = {'global': 0.5, 'reference': 0.5}
+            dh: dict[str,float], optional. Default=None.
+                The degree of data homogeneity that generated the global model.
+                Example:
+                    dh = {'global': 0.5, 'reference': 0.5}
+            ps: dict[str,float], optional. Default=None.
+                The probability of data shift.
+                Example:
+                    ps = {'global': 0.5, 'reference': 0.5}
+            knowledge_distillation: bool, optional. Default=False
+                If the model has knowledge distillation, then set True, to indicate that the global model parameters have
+                to be combined with the student model
+            decompress: bool, optional. Default=False
+                Whether or not to decompress global model parameters in case a previous compression was applied. Only set
+                True if using "FedPredict_server" and compressing the shared parameters.
+            logs: bool, optional. Default=False
+                Whether or not to log the results of the combination process.
 
-Returns: torch.nn.Module
-    The combined model
+        Returns: torch.nn.Module
+            The combined model
 
 
    """
@@ -145,7 +160,7 @@ Returns: torch.nn.Module
         local_model = copy.deepcopy(local_model)
         global_model = copy.deepcopy(global_model)
 
-        if not dynamic or len(current_proportion) > 0 or fc==-1:
+        if s is None and fc is None and il is None and dh is None and ps is None:
 
             combined_local_model = fedpredict_client_traditional_torch(local_model=local_model,
                                                                        global_model=global_model,
@@ -159,20 +174,25 @@ Returns: torch.nn.Module
                                                                        fc=fc,
                                                                        il=il)
 
-        else:
+        elif s is not None and fc is not None and il is not None and dh is not None and ps is not None:
 
             combined_local_model = fedpredict_client_dynamic_torch(local_model=local_model,
                                                                    global_model=global_model,
-                                                                   current_proportion=current_proportion,
                                                                    t=t,
                                                                    T=T,
                                                                    nt=nt,
                                                                    M=M,
-                                                                   similarity=similarity,
+                                                                   s=s,
                                                                    fc=fc,
                                                                    il=il,
+                                                                   dh=dh,
+                                                                   ps=ps,
                                                                    knowledge_distillation=knowledge_distillation,
-                                                                   decompress=decompress)
+                                                                   decompress=decompress,
+                                                                   logs=logs)
+        else:
+            raise ValueError(
+                f"Passed hyperparameters are not valid for the FedPredict versions. t: {t} T: {T} nt: {nt} s: {s} fc: {fc} il: {il} dh: {dh} ps: {ps}")
 
         return combined_local_model.to(device)
 
@@ -252,40 +272,19 @@ def fedpredict_client_traditional_torch(local_model: torch.nn.Module,
 
 def fedpredict_client_dynamic_torch(local_model: torch.nn.Module,
                                     global_model: Union[torch.nn.Module, List[NDArrays]],
-                                    current_proportion: List[float],
                                     t: int,
                                     T: int,
                                     nt: int,
                                     M:List,
-                                    similarity: float,
-                                    fc: float,
-                                    il: float,
+                                    s: float,
+                                    fc: dict[str, float] = None,
+                                    il: dict[str, float] = None,
+                                    dh: dict[str, float] = None,
+                                    ps: dict[str, float] = None,
                                     knowledge_distillation=False,
-                                    decompress=False) -> torch.nn.Module:
-    """
+                                    decompress=False,
+                                    logs=False) -> torch.nn.Module:
 
-    Args:
-        local_model: torch.nn.Module, required
-        global_model: torch.nn.Module or List[NDArrays], required
-        current_proportion: List[float], required
-        t: int, required
-        T: int, required
-        nt: int, required
-        M: list, required
-            The list of the indexes of the shared global model layers
-        local_client_information: dict, required
-        filename: str, optional. Default=''
-        knowledge_distillation: bool, optional. Default=False
-            If the model has knowledge distillation, then set True, to indicate that the global model parameters have
-            to be combined with the student model
-        decompress: bool, optional. Default=False
-           Whether or not to decompress global model parameters in case a previous compression was applied. Only set
-               True if using "FedPredict_server" and compressing the shared parameters.
-
-    Returns: torch.nn.Module
-        The combined model
-
-    """
     # Using 'torch.load'
     try:
         number_of_layers_local_model = count_layers(local_model)
@@ -302,7 +301,7 @@ def fedpredict_client_dynamic_torch(local_model: torch.nn.Module,
                 len(global_model), len(M)))
 
         local_model = fedpredict_dynamic_combine_models(global_model, local_model, t, T, nt, M,
-                                                            similarity, fc, il)
+                                                        s, fc, il, dh, ps, logs)
 
         return local_model
 
@@ -371,10 +370,10 @@ def fedpredict_combine_models(global_parameters, model, t, T, nt, M, knowledge_d
         print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
 
 
-def fedpredict_dynamic_combine_models(global_parameters, model, t, T, nt, M, similarity, fc, il):
+def fedpredict_dynamic_combine_models(global_parameters, model, t, T, nt, M, s, fc, il, dh, ps, logs=False):
     try:
 
-        local_model_weights, global_model_weight = fedpredict_dynamic_core(t, T, nt, similarity, fc, il)
+        local_model_weights, global_model_weight = fedpredict_dynamic_core(t, T, nt, s, fc, il, dh, ps, logs)
         count = 0
         for new_param, old_param in zip(global_parameters.parameters(), model.parameters()):
             if count in M:
@@ -382,7 +381,7 @@ def fedpredict_dynamic_combine_models(global_parameters, model, t, T, nt, M, sim
                     old_param.data = (
                             global_model_weight * new_param.data.clone() + local_model_weights * old_param.data.clone())
                 else:
-                    print("Não combinou, CNN student: ", new_param.shape, " CNN 3 proto: ", old_param.shape)
+                    raise ValueError(f"Layer {count} has different shapes: {new_param.shape} and {old_param.shape}")
             count += 1
 
         return model

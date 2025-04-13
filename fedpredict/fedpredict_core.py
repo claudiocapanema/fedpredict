@@ -459,10 +459,10 @@ def fedpredict_core(t, T, nt, fc, il):
         print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
 
 
-def fedpredict_dynamic_core(t, T, nt, similarity, fc, il):
+def fedpredict_dynamic_core(t, T, nt, s, fc, il, dh, ps, logs=False):
     try:
-        print("fedpredict_dynamic_core rodada: ", t, "local classes: ", similarity)
-        similarity = float(np.round(similarity, 1))
+        print("fedpredict_dynamic_core rodada: ", t, "local classes: ", s)
+        s = float(np.round(s, 1))
 
         if nt == 0:
             global_model_weight = 0
@@ -470,20 +470,20 @@ def fedpredict_dynamic_core(t, T, nt, similarity, fc, il):
             global_model_weight = 1
         # elif similarity != 1:
         #     global_model_weight = 1
-        elif fc is not None and il is not None and (fc > 0.94 and il < 0.4):
-            global_model_weight = 1
+        elif fc is not None and il is not None and dh is not None and ps is not None:
+            if (fc["global"] > fc["reference"] and il["global"] < il["reference"] and dh["global"] > dh["reference"]) and (nt > 0 and ps["global"] < ps["reference"] and dh["global"] > dh["reference"]):
+                global_model_weight = 1
         else:
             update_level = 1 / nt
             evolution_level = t / int(T)
-            eq1 = (-update_level - evolution_level) * similarity
+            eq1 = (-update_level - evolution_level) * s
             eq2 = round(np.exp(eq1), 6)
             global_model_weight = eq2
-            # global_model_weight = 0
 
         local_model_weights = 1 - global_model_weight
 
-        print("rodada: ", t, " rounds sem fit: ", nt, "\npeso global: ", global_model_weight, " peso local: ",
-              local_model_weights)
+        if logs:
+            print(f"round {t} nt {nt} gw {global_model_weight} lw {local_model_weights}")
 
         return local_model_weights, global_model_weight
 
