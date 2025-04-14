@@ -28,6 +28,7 @@ else:
 
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
+import logging
 import numpy as np
 import numpy.typing as npt
 
@@ -35,6 +36,9 @@ NDArray = npt.NDArray[Any]
 NDArrayInt = npt.NDArray[np.int8]
 NDArrayFloat = npt.NDArray[np.float32]
 NDArrays = List[NDArray]
+
+logging.basicConfig(level=logging.INFO)  # Configure logging
+logger = logging.getLogger(__name__)
 
 # ===========================================================================================
 
@@ -155,7 +159,7 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
     try:
 
         if not _has_torch:
-            raise ValueError("Framework 'torch' not found")
+            raise ImportError("Framework 'torch' not found")
 
         local_model = copy.deepcopy(local_model)
         global_model = copy.deepcopy(global_model)
@@ -194,7 +198,7 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
             version = "Version 3: MultiFedPredict"
 
         if logs:
-            print(f"Using {version}")
+            logger.info(f"Using {version}")
 
         combined_local_model = fedpredict_client_versions_torch(local_model=local_model,
                                                                 global_model=global_model,
@@ -214,8 +218,8 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
         return combined_local_model.to(device)
 
     except Exception as e:
-        print("FedPredict client torch")
-        print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
+        logger.critical("FedPredict client torch")
+        logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
 def fedpredict_client_traditional_torch(local_model: torch.nn.Module,
@@ -323,16 +327,16 @@ def fedpredict_client_versions_torch(local_model: torch.nn.Module,
         return local_model
 
     except Exception as e:
-        print("FedPredict dynamic client")
-        print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
+        logger.critical("FedPredict dynamic client")
+        logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 def torch_to_list_of_numpy(model: torch.nn.Module):
     try:
         parameters = [i.detach().cpu().numpy() for i in model.parameters()]
         return parameters
     except Exception as e:
-        print("Error on FedPredict's method: torch_to_list_of_numpy")
-        print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
+        logger.critical("Error on FedPredict's method: torch_to_list_of_numpy")
+        logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
 def decompress_global_parameters(compressed_global_model_parameters, model_shape, M, decompress):
@@ -347,8 +351,8 @@ def decompress_global_parameters(compressed_global_model_parameters, model_shape
         return parameters
 
     except Exception as e:
-        print("decompress global parameters")
-        print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
+        logger.critical("decompress global parameters")
+        logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
 def fedpredict_combine_models(global_parameters, model, t, T, nt, M, knowledge_distillation, fc, il):
@@ -365,7 +369,7 @@ def fedpredict_combine_models(global_parameters, model, t, T, nt, M, knowledge_d
                         old_param.data = (
                                 global_model_weight * new_param.data.clone() + local_model_weights * old_param.data.clone())
                     else:
-                        print("Not combined, CNN student: ", new_param.shape, " CNN 3 proto: ", old_param.shape)
+                        raise ValueError("Not combined, CNN student: ", new_param.shape, " CNN 3 proto: ", old_param.shape)
                 count += 1
         else:
             for new_param, old_param in zip(global_parameters.parameters(), model.parameters()):
@@ -383,8 +387,8 @@ def fedpredict_combine_models(global_parameters, model, t, T, nt, M, knowledge_d
         return model
 
     except Exception as e:
-        print("FedPredict combine models")
-        print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
+        logger.critical("FedPredict combine models")
+        logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
 def fedpredict_dynamic_combine_models(global_parameters, model, t, T, nt, M, s, fc, il, dh, ps, logs=False):
@@ -404,8 +408,8 @@ def fedpredict_dynamic_combine_models(global_parameters, model, t, T, nt, M, s, 
         return model
 
     except Exception as e:
-        print("FedPredict dynamic combine models")
-        print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
+        logger.critical("FedPredict dynamic combine models")
+        logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 def count_layers(model):
     contador = 0

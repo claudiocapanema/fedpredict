@@ -1,4 +1,5 @@
 import sys
+import logging
 import copy
 import numpy as np
 from .utils.compression_methods.parameters_svd import parameter_svd_write, inverse_parameter_svd_reading, if_reduces_size
@@ -28,6 +29,9 @@ NDArray = npt.NDArray[Any]
 NDArrayInt = npt.NDArray[np.int8]
 NDArrayFloat = npt.NDArray[np.float32]
 NDArrays = List[NDArray]
+
+logging.basicConfig(level=logging.INFO)  # Configure logging
+logger = logging.getLogger(__name__)
 
 
 class CKA(object):
@@ -81,8 +85,8 @@ def get_size(parameter):
     try:
         return parameter.nbytes
     except Exception as e:
-        print("get_size")
-        print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
+        logger.critical("get_size")
+        logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
 def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], fedpredict_clients_metrics: Dict,
@@ -117,7 +121,7 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], f
 
         # Reuse previously compressed parameters
         previously_reduced_parameters = {}
-        print("compression technique: ", compression_method)
+        logger.info(f"compression technique: {compression_method}")
         if compression_method in ["fedkd", "compredict", "dls_compredict"]:
             layers_compression_range = layer_compression_range(model_shape)
         fedkd = None
@@ -158,7 +162,7 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], f
             elif compression_method == 'fedkd':
                 if fedkd is None:
                     parameters_to_send = parameters_to_send if parameters_to_send is not None else parameters
-                    print("dentro 1: ", type(parameters_to_send[0]), len(parameters_to_send[0]))
+                    logger.info(f"dentro 1: {type(parameters_to_send[0])}, {len(parameters_to_send[0])}")
                     parameters_to_send, layers_fraction = fedkd_compression(
                         fedpredict_clients_metrics[str(client_id)]['round_of_last_fit'], layers_compression_range,
                         num_rounds, client_id, server_round, len(M), parameters_to_send)
@@ -219,18 +223,17 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], f
 
             parameters_to_send = None
 
-            print("Tamanho parametros antes: ", sum([i.nbytes for i in parameters]))
+            logger.info(f"Tamanho parametros antes: {([i.nbytes for i in parameters])}")
 
             if process_parameters:
                 if "dls" in compression_method:
                     parameters_to_send, M = dls(fedpredict_clients_metrics[client_id]['first_round'],
                                                 parameters, server_round, nt, num_rounds, df, size_of_parameters)
-                    print("Tamanho parametros als: ", sum(i.nbytes for i in parameters_to_send))
+                    logger.info(f"Tamanho parametros als: {sum(i.nbytes for i in parameters_to_send)}")
                 elif "per" in compression_method:
                     parameters_to_send, M = per(fedpredict_clients_metrics[client_id]['first_round'],
                                                 parameters)
-                    print("Tamanho parametros per: ", sum(i.nbytes for i in parameters_to_send),
-                          len(parameters_to_send), len(M))
+                    logger.info(f"Tamanho parametros per: {sum([i.nbytes for i in parameters_to_send])}, {len(parameters_to_send)}, {len(M)}")
                 layers_fraction = []
                 if 'compredict' in compression_method:
                     parameters_to_send = parameters_to_send if parameters_to_send is not None else parameters
@@ -241,18 +244,18 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], f
                     pass
                 else:
                     config['decompress'] = False
-                    print("nao igual")
+                    logger.info("nao igual")
                 # config['decompress'] = False
-                print("Novos parametros para nt: ", nt)
+                logger.info(f"Novos parametros para nt: {nt}")
                 decompress = config['decompress']
                 previously_reduced_parameters[nt] = [copy.deepcopy(parameters_to_send), M, layers_fraction, decompress]
 
             else:
-                print("Reutilizou parametros de nt: ", nt)
+                logger.info(f"Reutilizou parametros de nt: {nt}")
                 parameters_to_send, M, layers_fraction, decompress = previously_reduced_parameters[nt]
 
             parameters_to_send = [np.array(i) for i in parameters_to_send]
-            print("Tamanho parametros compredict: ", sum(i.nbytes for i in parameters_to_send))
+            logger.info(f"Tamanho parametros compredict: {sum(i.nbytes for i in parameters_to_send)}")
             for i in range(1, len(parameters)):
                 size_of_parameters.append(get_size(parameters[i]))
             fedpredict_clients_metrics[str(client.cid)]['acc_bytes_rate'] = size_of_parameters
@@ -272,8 +275,8 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], f
         return client_evaluate_list_fedpredict
 
     except Exception as e:
-        print("fedpredict server")
-        print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
+        logger.critical("fedpredict server")
+        logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
 def compredict(round_of_last_fit, layers_comppression_range, num_rounds, server_round, M, parameter):
@@ -305,12 +308,12 @@ def compredict(round_of_last_fit, layers_comppression_range, num_rounds, server_
 
                 n_components_list.append(n_components)
 
-            print("Vetor de componentes: ", n_components_list)
+            logger.info(f"Vetor de componentes: {n_components_list}")
 
             parameter = parameter_svd_write(parameter, n_components_list)
 
             # print("Client: ", client_id, " round: ", server_round, " nt: ", nt, " norm: ", np.mean(gradient_norm), " camadas: ", M, " todos: ", gradient_norm)
-            print("modelo compredict: ", [i.shape for i in parameter])
+            logger.info(f"modelo compredict: {[i.shape for i in parameter]}")
 
         else:
             new_parameter = []
@@ -326,8 +329,8 @@ def compredict(round_of_last_fit, layers_comppression_range, num_rounds, server_
         return parameter, layers_fraction
 
     except Exception as e:
-        print("compredict")
-        print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
+        logger.critical("compredict")
+        logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
 def layer_compression_range(model_shape):
@@ -352,8 +355,8 @@ def layer_compression_range(model_shape):
         return layers_range
 
     except Exception as e:
-        print("layer compression range")
-        print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
+        logger.critical("layer compression range")
+        logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
 def dls(first_round, parameters,
@@ -386,8 +389,8 @@ def dls(first_round, parameters,
         return parameters, M
 
     except Exception as e:
-        print("dls")
-        print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
+        logger.critical("dls")
+        logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 def per(first_round, parameters):
     try:
@@ -415,8 +418,8 @@ def per(first_round, parameters):
         return parameters, M
 
     except Exception as e:
-        print("per")
-        print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
+        logger.critical("per")
+        logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
 def fedpredict_core(t, T, nt, fc, il):
@@ -455,8 +458,8 @@ def fedpredict_core(t, T, nt, fc, il):
         return local_model_weights, global_model_weight
 
     except Exception as e:
-        print("fedpredict core")
-        print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
+        logger.critical("fedpredict core")
+        logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
 def fedpredict_dynamic_core(t, T, nt, s=1, fc=None, il=None, dh=None, ps=None, logs=False):
@@ -483,13 +486,13 @@ def fedpredict_dynamic_core(t, T, nt, s=1, fc=None, il=None, dh=None, ps=None, l
         local_model_weights = 1 - global_model_weight
 
         if logs:
-            print(f"round {t} nt {nt} gw {global_model_weight} lw {local_model_weights}")
+            logger.info(f"round {t} nt {nt} gw {global_model_weight} lw {local_model_weights}")
 
         return local_model_weights, global_model_weight
 
     except Exception as e:
-        print("fedpredict core")
-        print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
+        logger.critical("fedpredict core")
+        logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
 def fedpredict_core_layer_selection(t, T, nt, n_layers, size_per_layer, df):
@@ -499,7 +502,7 @@ def fedpredict_core_layer_selection(t, T, nt, n_layers, size_per_layer, df):
         if nt == 0:
             shared_layers = 0
         else:
-            print("similaridade layer selection: ", df)
+            logger.info(f"similaridade layer selection: {df}")
             update_level = 1 / nt
             evolution_level = t / T
             eq1 = (-update_level - evolution_level) * (df)  # v8 ótimo
@@ -508,13 +511,13 @@ def fedpredict_core_layer_selection(t, T, nt, n_layers, size_per_layer, df):
 
         shared_layers = [i for i in range(shared_layers * 2)]
 
-        print("Shared layers: ", shared_layers, " rodada: ", t)
+        logger.info(f"Shared layers: {shared_layers}, rodada: {t}")
 
         return shared_layers
 
     except Exception as e:
-        print("fedpredict core server layer selection")
-        print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
+        logger.critical("fedpredict core server layer selection")
+        logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
 def fedpredict_core_compredict(t, T, nt, layer, compression_range):
@@ -527,12 +530,12 @@ def fedpredict_core_compredict(t, T, nt, layer, compression_range):
         eq1 = - evolution_level - updated_level  # v5
         fc_l = round(np.exp(eq1), 6)
         n_components = max(round(fc_l * compression_range), 1)
-        print("fracao: ", fc_l, " fraction: ", fraction, " componentes: ", n_components, " de ", compression_range)
+        logger.info(f"fracao: {fc_l}, fraction: {fraction}, componentes: {n_components}, de {compression_range}")
 
         return n_components
 
     except Exception as e:
-        print("fedpredict core server compredict")
+        logger.critical("fedpredict core server compredict")
         print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
 
 
@@ -557,7 +560,7 @@ def fedpredict_layerwise_similarity(global_parameter, clients_parameters, client
                                     similarity_per_layer_list):
     num_layers = len(global_parameter)
     num_clients = len(clients_parameters)
-    print("global: ", num_layers)
+    logger.info(f"global: {num_layers}")
     similarity_per_layer = {i: {} for i in clients_ids}
     # interest_layers = [0, 1, int(num_layers/2)-2, int(num_layers/2)-1, num_layers-2, num_layers-1]
     interest_layers = [0, num_layers - 2]
@@ -570,7 +573,7 @@ def fedpredict_layerwise_similarity(global_parameter, clients_parameters, client
 
         client = clients_parameters[client_id]
         client_id = clients_ids[client_id]
-        print("cliente antes: ", len(client))
+        logger.info(f"cliente antes: {len(client)}")
 
         for layer_index in range(num_layers):
             client_layer = client[layer_index]
@@ -655,7 +658,7 @@ def fedpredict_layerwise_similarity(global_parameter, clients_parameters, client
         # mean_similarity_per_layer[layer_index]['ci'] = st.norm.interval(alpha=0.95, loc=np.mean(similarities), scale=st.sem(similarities))[1] - np.mean(similarities)
         # mean_difference_per_layer[layer_index]['min'] = np.mean(min_difference)
         # mean_difference_per_layer[layer_index]['max'] = np.mean(max_difference)
-        print("""similaridade (camada {}): {}""".format(layer_index, mean_similarity_per_layer[layer_index]))
+        logger.info("""similaridade (camada {}): {}""".format(layer_index, mean_similarity_per_layer[layer_index]))
     for layer in difference_per_layer_vector:
         if np.sum(difference_per_layer_vector[layer]) == 0:
             continue
@@ -702,8 +705,8 @@ def get_size(parameter):
     try:
         return parameter.nbytes
     except Exception as e:
-        print("get_size")
-        print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
+        logger.critical("get_size")
+        logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
 def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], fedpredict_clients_metrics: Dict,
@@ -738,7 +741,7 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], f
 
         # Reuse previously compressed parameters
         previously_reduced_parameters = {}
-        print("compression technique: ", compression_method)
+        logger.info(f"compression technique: {compression_method}")
         if compression_method in ["fedkd", "compredict", "dls_compredict"]:
             layers_compression_range = layer_compression_range(model_shape)
         fedkd = None
@@ -779,7 +782,7 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], f
             elif compression_method == 'fedkd':
                 if fedkd is None:
                     parameters_to_send = parameters_to_send if parameters_to_send is not None else parameters
-                    print("dentro 1: ", type(parameters_to_send[0]), len(parameters_to_send[0]))
+                    logger.info(f"dentro 1: {type(parameters_to_send[0])}, {len(parameters_to_send[0])}")
                     parameters_to_send, layers_fraction = fedkd_compression(
                         fedpredict_clients_metrics[str(client_id)]['round_of_last_fit'], layers_compression_range,
                         num_rounds, client_id, server_round, len(M), parameters_to_send)
@@ -805,8 +808,6 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], f
 
                 t, k_values = sparse_crs_top_k([np.abs(i) for i in parameters], k)
                 parameters_to_send = t
-                # print("contar2")
-                # print([len(i[i == 0]) for i in parameters_to_send])
                 config['decompress'] = False
                 config['M'] = M
                 config['layers_fraction'] = 1
@@ -840,18 +841,17 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], f
 
             parameters_to_send = None
 
-            print("Tamanho parametros antes: ", sum([i.nbytes for i in parameters]))
+            logger.info(f"Tamanho parametros antes: {sum([i.nbytes for i in parameters])}")
 
             if process_parameters:
                 if "dls" in compression_method:
                     parameters_to_send, M = dls(fedpredict_clients_metrics[client_id]['first_round'],
                                                 parameters, server_round, nt, num_rounds, df, size_of_parameters)
-                    print("Tamanho parametros als: ", sum(i.nbytes for i in parameters_to_send))
+                    logger.info(f"Tamanho parametros als: {sum(i.nbytes for i in parameters_to_send)}")
                 elif "per" in compression_method:
                     parameters_to_send, M = per(fedpredict_clients_metrics[client_id]['first_round'],
                                                 parameters)
-                    print("Tamanho parametros per: ", sum(i.nbytes for i in parameters_to_send),
-                          len(parameters_to_send), len(M))
+                    logger.info(f"Tamanho parametros per: {sum(i.nbytes for i in parameters_to_send)}, {len(parameters_to_send)}, {len(M)}")
                 layers_fraction = []
                 if 'compredict' in compression_method:
                     parameters_to_send = parameters_to_send if parameters_to_send is not None else parameters
@@ -862,18 +862,18 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], f
                     pass
                 else:
                     config['decompress'] = False
-                    print("nao igual")
+                    logger.info("nao igual")
                 # config['decompress'] = False
-                print("Novos parametros para nt: ", nt)
+                logger.info(f"Novos parametros para nt: {nt}")
                 decompress = config['decompress']
                 previously_reduced_parameters[nt] = [copy.deepcopy(parameters_to_send), M, layers_fraction, decompress]
 
             else:
-                print("Reutilizou parametros de nt: ", nt)
+                logger.info(f"Reutilizou parametros de nt: {nt}")
                 parameters_to_send, M, layers_fraction, decompress = previously_reduced_parameters[nt]
 
             parameters_to_send = [np.array(i) for i in parameters_to_send]
-            print("Tamanho parametros compredict: ", sum(i.nbytes for i in parameters_to_send))
+            logger.info(f"Tamanho parametros compredict: {sum(i.nbytes for i in parameters_to_send)}")
             for i in range(1, len(parameters)):
                 size_of_parameters.append(get_size(parameters[i]))
             fedpredict_clients_metrics[str(client.cid)]['acc_bytes_rate'] = size_of_parameters
@@ -893,8 +893,8 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], f
         return client_evaluate_list_fedpredict
 
     except Exception as e:
-        print("fedpredict server")
-        print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
+        logger.critical("fedpredict server")
+        logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
 def compredict(round_of_last_fit, layers_comppression_range, num_rounds, server_round, M, parameter):
@@ -926,12 +926,12 @@ def compredict(round_of_last_fit, layers_comppression_range, num_rounds, server_
 
                 n_components_list.append(n_components)
 
-            print("Vetor de componentes: ", n_components_list)
+            logger.info(f"Vetor de componentes: {n_components_list}")
 
             parameter = parameter_svd_write(parameter, n_components_list)
 
-            # print("Client: ", client_id, " round: ", server_round, " nt: ", nt, " norm: ", np.mean(gradient_norm), " camadas: ", M, " todos: ", gradient_norm)
-            print("modelo compredict: ", [i.shape for i in parameter])
+
+            logger.info(f"modelo compredict: {[i.shape for i in parameter]}")
 
         else:
             new_parameter = []
@@ -947,8 +947,8 @@ def compredict(round_of_last_fit, layers_comppression_range, num_rounds, server_
         return parameter, layers_fraction
 
     except Exception as e:
-        print("compredict")
-        print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
+        logger.critical("compredict")
+        logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
 def layer_compression_range(model_shape):
@@ -973,8 +973,8 @@ def layer_compression_range(model_shape):
         return layers_range
 
     except Exception as e:
-        print("layer compression range")
-        print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
+        logger.critical("layer compression range")
+        logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
 def dls(first_round, parameters,
@@ -1007,8 +1007,8 @@ def dls(first_round, parameters,
         return parameters, M
 
     except Exception as e:
-        print("dls")
-        print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
+        logger.critical("dls")
+        logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
 # ===========================================================================================
@@ -1039,5 +1039,5 @@ def per(first_round, parameters):
         return parameters, M
 
     except Exception as e:
-        print("per")
-        print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
+        logger.critical("per")
+        logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
