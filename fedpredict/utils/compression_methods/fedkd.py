@@ -49,7 +49,7 @@ def fedkd_compression_core(parameters, energy):
         print("fedkd compression_methods core")
         print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
 
-def fedkd_compression(round_of_last_fit, layers_comppression_range, num_rounds, client_id, server_round, M, parameter):
+def fedkd_compression(round_of_last_fit, layers_compression_range, num_rounds, client_id, server_round, M, parameter):
 
     nt = server_round - round_of_last_fit
     layers_fraction = []
@@ -59,8 +59,8 @@ def fedkd_compression(round_of_last_fit, layers_comppression_range, num_rounds, 
         layer = parameter[i]
         if len(layer.shape) >= 2:
 
-            if layers_comppression_range[i] > 0:
-                n_components = layers_comppression_range[i]
+            if layers_compression_range[i] > 0:
+                n_components = layers_compression_range[i]
             else:
                 n_components = None
         else:

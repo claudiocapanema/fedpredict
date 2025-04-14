@@ -137,7 +137,7 @@ def get_size(parameter):
 
 
 def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], fedpredict_clients_metrics: Dict,
-                      server_round: int, num_rounds: int, model_shape: List, compression_method=None,
+                      t: int, T: int, model_shape: List, compression_method=None,
                       df: float=0, fl_framework=None):
     """
 
@@ -148,8 +148,8 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], f
             List of clients' tuples
         fedpredict_clients_metrics: dict, required
             Dict of clients' metrics.
-        server_round: int, required
-        num_rounds: int, required
+        t: int, required
+        T: int, required
         df: float, optional. Default=0
             Layers' similarity difference. It is used when compression_method uses the "dls" technique.
         model_shape: list, optional
@@ -174,10 +174,10 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], f
         fedkd = None
         for client_tuple in client_evaluate_list:
             client = client_tuple[0]
-            client_id = str(client.cid)
-            config = copy.copy(client_tuple[1].config)
-            client_config = fedpredict_clients_metrics[str(client.cid)]
-            nt = client_config['nt']
+            client_id = client_tuple["cid"]
+            config = client_tuple["config"]
+            nt = client_tuple['nt']
+            lt = client_tuple['lt']
             if nt != 0 and nt in previously_reduced_parameters:
                 process_parameters = False
             else:
@@ -186,9 +186,7 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], f
             if compression_method is None:
                 process_parameters = True
             config['nt'] = nt
-            config['metrics'] = client_config
-            config['last_global_accuracy'] = accuracy
-            config['total_server_rounds'] = num_rounds
+            config['T'] = T
             M = [i for i in range(len(parameters))]
             parameters_to_send = None
             if nt == 0 and compression_method not in ["fedkd", None]:
@@ -211,8 +209,8 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], f
                     parameters_to_send = parameters_to_send if parameters_to_send is not None else parameters
                     logger.info(f"dentro 1: {type(parameters_to_send[0])}, {len(parameters_to_send[0])}")
                     parameters_to_send, layers_fraction = fedkd_compression(
-                        fedpredict_clients_metrics[str(client_id)]['round_of_last_fit'], layers_compression_range,
-                        num_rounds, client_id, server_round, len(M), parameters_to_send)
+                        lt, layers_compression_range,
+                        T, client_id, t, len(M), parameters_to_send)
                     fedkd = parameters_to_send
                 else:
                     parameters_to_send = fedkd
@@ -275,7 +273,7 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], f
             if process_parameters:
                 if "dls" in compression_method:
                     parameters_to_send, M = dls(fedpredict_clients_metrics[client_id]['first_round'],
-                                                parameters, server_round, nt, num_rounds, df, size_of_parameters)
+                                                parameters, t, nt, T, df, size_of_parameters)
                     logger.info(f"Tamanho parametros als: {sum(i.nbytes for i in parameters_to_send)}")
                 elif "per" in compression_method:
                     parameters_to_send, M = per(fedpredict_clients_metrics[client_id]['first_round'],
@@ -286,7 +284,7 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], f
                     parameters_to_send = parameters_to_send if parameters_to_send is not None else parameters
                     parameters_to_send, layers_fraction = compredict(
                         fedpredict_clients_metrics[str(client_id)]['round_of_last_fit'], layers_compression_range,
-                        num_rounds, server_round, len(M), parameters_to_send)
+                        T, t, len(M), parameters_to_send)
                     config['decompress'] = True
                     pass
                 else:
@@ -757,7 +755,7 @@ def get_size(parameter):
 
 
 def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], fedpredict_clients_metrics: Dict,
-                      server_round: int, num_rounds: int, model_shape: List, compression_method=None,
+                      t: int, T: int, model_shape: List, compression_method=None,
                       df: float=0, fl_framework=None):
     """
 
@@ -768,8 +766,8 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], f
             List of clients' tuples
         fedpredict_clients_metrics: dict, required
             Dict of clients' metrics.
-        server_round: int, required
-        num_rounds: int, required
+        t: int, required
+        T: int, required
         df: float, optional. Default=0
             Layers' similarity difference. It is used when compression_method uses the "dls" technique.
         model_shape: list, optional
@@ -793,11 +791,9 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], f
             layers_compression_range = layer_compression_range(model_shape)
         fedkd = None
         for client_tuple in client_evaluate_list:
-            client = client_tuple[0]
-            client_id = str(client.cid)
-            config = copy.copy(client_tuple[1].config)
-            client_config = fedpredict_clients_metrics[str(client.cid)]
-            nt = client_config['nt']
+            client = client_tuple['client']
+            client_id = client_tuple['client_id']
+            nt = client_tuple['nt']
             if nt != 0 and nt in previously_reduced_parameters:
                 process_parameters = False
             else:
@@ -805,10 +801,9 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], f
 
             if compression_method is None:
                 process_parameters = True
+            config = {}
             config['nt'] = nt
-            config['metrics'] = client_config
-            config['last_global_accuracy'] = accuracy
-            config['total_server_rounds'] = num_rounds
+            config['T'] = T
             M = [i for i in range(len(parameters))]
             parameters_to_send = None
             if nt == 0 and compression_method not in ["fedkd", None]:
@@ -832,7 +827,7 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], f
                     logger.info(f"dentro 1: {type(parameters_to_send[0])}, {len(parameters_to_send[0])}")
                     parameters_to_send, layers_fraction = fedkd_compression(
                         fedpredict_clients_metrics[str(client_id)]['round_of_last_fit'], layers_compression_range,
-                        num_rounds, client_id, server_round, len(M), parameters_to_send)
+                        T, client_id, t, len(M), parameters_to_send)
                     fedkd = parameters_to_send
                 else:
                     parameters_to_send = fedkd
@@ -893,7 +888,7 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], f
             if process_parameters:
                 if "dls" in compression_method:
                     parameters_to_send, M = dls(fedpredict_clients_metrics[client_id]['first_round'],
-                                                parameters, server_round, nt, num_rounds, df, size_of_parameters)
+                                                parameters, t, nt, T, df, size_of_parameters)
                     logger.info(f"Tamanho parametros als: {sum(i.nbytes for i in parameters_to_send)}")
                 elif "per" in compression_method:
                     parameters_to_send, M = per(fedpredict_clients_metrics[client_id]['first_round'],
@@ -904,7 +899,7 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], f
                     parameters_to_send = parameters_to_send if parameters_to_send is not None else parameters
                     parameters_to_send, layers_fraction = compredict(
                         fedpredict_clients_metrics[str(client_id)]['round_of_last_fit'], layers_compression_range,
-                        num_rounds, server_round, len(M), parameters_to_send)
+                        T, t, len(M), parameters_to_send)
                     config['decompress'] = True
                     pass
                 else:
