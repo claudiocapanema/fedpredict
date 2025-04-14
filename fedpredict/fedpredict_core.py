@@ -30,8 +30,55 @@ NDArrayInt = npt.NDArray[np.int8]
 NDArrayFloat = npt.NDArray[np.float32]
 NDArrays = List[NDArray]
 
-logging.basicConfig(level=logging.INFO)  # Configure logging
+class CustomFormatter(logging.Formatter):
+    """Logging colored formatter, adapted from https://stackoverflow.com/a/56944256/3638629"""
+
+    grey = '\x1b[38;21m'
+    blue = '\x1b[38;5;39m'
+    yellow = '\x1b[38;5;226m'
+    red = '\x1b[38;5;196m'
+    bold_red = '\x1b[31;1m'
+    reset = '\x1b[0m'
+
+    def __init__(self, fmt):
+        super().__init__()
+        self.fmt = fmt
+        self.FORMATS = {
+            logging.DEBUG: self.grey + self.fmt + self.reset,
+            logging.INFO: self.blue + self.fmt + self.reset,
+            logging.WARNING: self.yellow + self.fmt + self.reset,
+            logging.ERROR: self.red + self.fmt + self.reset,
+            logging.CRITICAL: self.bold_red + self.fmt + self.reset
+        }
+
+    def format(self, record):
+        log_fmt = self.FORMATS.get(record.levelno)
+        formatter = logging.Formatter(log_fmt)
+        return formatter.format(record)
+
+import datetime
+
+# Create custom logger logging all five levels
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+# Define format for logs
+fmt = '%(asctime)s | %(levelname)8s | %(message)s'
+
+# Create stdout handler for logging to the console (logs all five levels)
+stdout_handler = logging.StreamHandler()
+stdout_handler.setLevel(logging.DEBUG)
+stdout_handler.setFormatter(CustomFormatter(fmt))
+
+# Create file handler for logging to a file (logs all five levels)
+today = datetime.date.today()
+file_handler = logging.FileHandler('my_app_{}.log'.format(today.strftime('%Y_%m_%d')))
+file_handler.setLevel(logging.DEBUG)
+file_handler.setFormatter(logging.Formatter(fmt))
+
+# Add both handlers to the logger
+logger.addHandler(stdout_handler)
+logger.addHandler(file_handler)
 
 
 class CKA(object):
@@ -85,7 +132,7 @@ def get_size(parameter):
     try:
         return parameter.nbytes
     except Exception as e:
-        logger.critical("get_size")
+        logger.critical("Method: get_size")
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
@@ -275,7 +322,7 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], f
         return client_evaluate_list_fedpredict
 
     except Exception as e:
-        logger.critical("fedpredict server")
+        logger.critical("Method: fedpredict server")
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
@@ -329,7 +376,7 @@ def compredict(round_of_last_fit, layers_comppression_range, num_rounds, server_
         return parameter, layers_fraction
 
     except Exception as e:
-        logger.critical("compredict")
+        logger.critical("Method: compredict")
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
@@ -355,7 +402,7 @@ def layer_compression_range(model_shape):
         return layers_range
 
     except Exception as e:
-        logger.critical("layer compression range")
+        logger.critical("Method: layer compression range")
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
@@ -389,7 +436,7 @@ def dls(first_round, parameters,
         return parameters, M
 
     except Exception as e:
-        logger.critical("dls")
+        logger.critical("Method: dls")
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 def per(first_round, parameters):
@@ -418,7 +465,7 @@ def per(first_round, parameters):
         return parameters, M
 
     except Exception as e:
-        logger.critical("per")
+        logger.critical("Method: per")
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
@@ -458,7 +505,7 @@ def fedpredict_core(t, T, nt, fc, il):
         return local_model_weights, global_model_weight
 
     except Exception as e:
-        logger.critical("fedpredict core")
+        logger.critical("Method: fedpredict core")
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
@@ -491,7 +538,7 @@ def fedpredict_dynamic_core(t, T, nt, s=1, fc=None, il=None, dh=None, ps=None, l
         return local_model_weights, global_model_weight
 
     except Exception as e:
-        logger.critical("fedpredict core")
+        logger.critical("Method: fedpredict core")
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
@@ -516,7 +563,7 @@ def fedpredict_core_layer_selection(t, T, nt, n_layers, size_per_layer, df):
         return shared_layers
 
     except Exception as e:
-        logger.critical("fedpredict core server layer selection")
+        logger.critical("Method: fedpredict_core_server_layer_selection")
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
@@ -535,7 +582,7 @@ def fedpredict_core_compredict(t, T, nt, layer, compression_range):
         return n_components
 
     except Exception as e:
-        logger.critical("fedpredict core server compredict")
+        logger.critical("Method: fedpredict_core_server_compredict")
         print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
 
 
@@ -705,7 +752,7 @@ def get_size(parameter):
     try:
         return parameter.nbytes
     except Exception as e:
-        logger.critical("get_size")
+        logger.critical("Method: get_size")
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
@@ -893,7 +940,7 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], f
         return client_evaluate_list_fedpredict
 
     except Exception as e:
-        logger.critical("fedpredict server")
+        logger.critical("Method: fedpredict server")
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
@@ -947,7 +994,7 @@ def compredict(round_of_last_fit, layers_comppression_range, num_rounds, server_
         return parameter, layers_fraction
 
     except Exception as e:
-        logger.critical("compredict")
+        logger.critical("Method: compredict")
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
@@ -973,7 +1020,7 @@ def layer_compression_range(model_shape):
         return layers_range
 
     except Exception as e:
-        logger.critical("layer compression range")
+        logger.critical("Method: layer compression range")
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
@@ -1007,7 +1054,7 @@ def dls(first_round, parameters,
         return parameters, M
 
     except Exception as e:
-        logger.critical("dls")
+        logger.critical("Method: dls")
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
@@ -1039,5 +1086,5 @@ def per(first_round, parameters):
         return parameters, M
 
     except Exception as e:
-        logger.critical("per")
+        logger.critical("Method: per")
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))

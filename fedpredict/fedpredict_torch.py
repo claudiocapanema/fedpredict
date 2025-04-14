@@ -37,8 +37,57 @@ NDArrayInt = npt.NDArray[np.int8]
 NDArrayFloat = npt.NDArray[np.float32]
 NDArrays = List[NDArray]
 
-logging.basicConfig(level=logging.INFO)  # Configure logging
+
+class CustomFormatter(logging.Formatter):
+    """Logging colored formatter, adapted from https://stackoverflow.com/a/56944256/3638629"""
+
+    grey = '\x1b[38;21m'
+    blue = '\x1b[38;5;39m'
+    yellow = '\x1b[38;5;226m'
+    red = '\x1b[38;5;196m'
+    bold_red = '\x1b[31;1m'
+    reset = '\x1b[0m'
+
+    def __init__(self, fmt):
+        super().__init__()
+        self.fmt = fmt
+        self.FORMATS = {
+            logging.DEBUG: self.grey + self.fmt + self.reset,
+            logging.INFO: self.blue + self.fmt + self.reset,
+            logging.WARNING: self.yellow + self.fmt + self.reset,
+            logging.ERROR: self.red + self.fmt + self.reset,
+            logging.CRITICAL: self.bold_red + self.fmt + self.reset
+        }
+
+    def format(self, record):
+        log_fmt = self.FORMATS.get(record.levelno)
+        formatter = logging.Formatter(log_fmt)
+        return formatter.format(record)
+
+import datetime
+
+# Create custom logger logging all five levels
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+# Define format for logs
+fmt = '%(asctime)s | %(levelname)8s | %(message)s'
+
+# Create stdout handler for logging to the console (logs all five levels)
+stdout_handler = logging.StreamHandler()
+stdout_handler.setLevel(logging.DEBUG)
+stdout_handler.setFormatter(CustomFormatter(fmt))
+
+# Create file handler for logging to a file (logs all five levels)
+today = datetime.date.today()
+file_handler = logging.FileHandler('my_app_{}.log'.format(today.strftime('%Y_%m_%d')))
+file_handler.setLevel(logging.DEBUG)
+file_handler.setFormatter(logging.Formatter(fmt))
+
+# Add both handlers to the logger
+logger.addHandler(stdout_handler)
+logger.addHandler(file_handler)
+
 
 # ===========================================================================================
 
@@ -161,8 +210,8 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
         if not _has_torch:
             raise ImportError("Framework 'torch' not found")
 
-        local_model = copy.deepcopy(local_model)
-        global_model = copy.deepcopy(global_model)
+        local_model = copy.deepcopy(local_model).to(device)
+        global_model = copy.deepcopy(global_model).to(device)
 
         # if s is None and fc is None and il is None and dh is None and ps is None:
         #
@@ -218,7 +267,7 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
         return combined_local_model.to(device)
 
     except Exception as e:
-        logger.critical("FedPredict client torch")
+        logger.critical("Method: fedpredict_client_torch")
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
@@ -327,7 +376,7 @@ def fedpredict_client_versions_torch(local_model: torch.nn.Module,
         return local_model
 
     except Exception as e:
-        logger.critical("FedPredict dynamic client")
+        logger.critical("Method: fedpredict_client_versions_torch")
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 def torch_to_list_of_numpy(model: torch.nn.Module):
@@ -335,7 +384,7 @@ def torch_to_list_of_numpy(model: torch.nn.Module):
         parameters = [i.detach().cpu().numpy() for i in model.parameters()]
         return parameters
     except Exception as e:
-        logger.critical("Error on FedPredict's method: torch_to_list_of_numpy")
+        logger.critical("Method: torch_to_list_of_numpy")
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
@@ -351,7 +400,7 @@ def decompress_global_parameters(compressed_global_model_parameters, model_shape
         return parameters
 
     except Exception as e:
-        logger.critical("decompress global parameters")
+        logger.critical("Method: decompress_global_parameters")
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
@@ -387,7 +436,7 @@ def fedpredict_combine_models(global_parameters, model, t, T, nt, M, knowledge_d
         return model
 
     except Exception as e:
-        logger.critical("FedPredict combine models")
+        logger.critical("method: fedpredict_combine_models")
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
@@ -408,7 +457,7 @@ def fedpredict_dynamic_combine_models(global_parameters, model, t, T, nt, M, s, 
         return model
 
     except Exception as e:
-        logger.critical("FedPredict dynamic combine models")
+        logger.critical("Method: fedpredict_dynamic_combine_models")
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 def count_layers(model):
