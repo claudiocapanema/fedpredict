@@ -136,192 +136,192 @@ def get_size(parameter):
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
-def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], fedpredict_clients_metrics: Dict,
-                      t: int, T: int, model_shape: List, compression=None,
-                      df: float=0, fl_framework=None):
-    """
-
-    Args:
-        parameters: list[np.array], required
-            List of numpy arrays
-        client_evaluate_list: list[tuple], required
-            List of clients' tuples
-        fedpredict_clients_metrics: dict, required
-            Dict of clients' metrics.
-        t: int, required
-        T: int, required
-        df: float, optional. Default=0
-            Layers' similarity difference. It is used when compression_method uses the "dls" technique.
-        model_shape: list, optional
-        compression: None, 'dls_compredict', 'dls', 'compredict', 'sparsification', 'fedkd', 'fedper'. Default=None
-        fl_framework: None, 'flwr'. Default='flwr'
-            Method for compressing the global model parameters before sending to thee clients
-
-    Returns: list[tuple]
-
-    """
-    try:
-
-        client_evaluate_list_fedpredict = []
-        accuracy = 0
-        size_of_parameters = []
-
-        # Reuse previously compressed parameters
-        previously_reduced_parameters = {}
-        logger.info(f"compression technique: {compression}")
-        if compression in ["fedkd", "compredict", "dls_compredict"]:
-            layers_compression_range = layer_compression_range(model_shape)
-        fedkd = None
-        for client_tuple in client_evaluate_list:
-            client = client_tuple[0]
-            client_id = client_tuple["cid"]
-            config = client_tuple["config"]
-            nt = client_tuple['nt']
-            lt = client_tuple['lt']
-            if nt != 0 and nt in previously_reduced_parameters:
-                process_parameters = False
-            else:
-                process_parameters = True
-
-            if compression is None:
-                process_parameters = True
-            config['nt'] = nt
-            config['T'] = T
-            M = [i for i in range(len(parameters))]
-            parameters_to_send = None
-            if nt == 0 and compression not in ["fedkd", None]:
-                config['M'] = []
-                config['decompress'] = False
-                config['layers_fraction'] = 0
-                if fl_framework is None:
-                    config['parameters'] = np.array([])
-                    client_evaluate_list_fedpredict.append((client, config))
-                elif fl_framework == 'flwr':
-                    if _has_flwr:
-                        evaluate_ins = EvaluateIns(ndarrays_to_parameters(np.array([])), config)
-                        client_evaluate_list_fedpredict.append((client, evaluate_ins))
-                    else:
-                        raise ImportError(
-                            "Flower is required. Digit: 'pip install fedpredict[flwr]' or 'pip install fedpredict[full]'")
-                continue
-            elif compression == 'fedkd':
-                if fedkd is None:
-                    parameters_to_send = parameters_to_send if parameters_to_send is not None else parameters
-                    logger.info(f"dentro 1: {type(parameters_to_send[0])}, {len(parameters_to_send[0])}")
-                    parameters_to_send, layers_fraction = fedkd_compression(
-                        lt, layers_compression_range,
-                        T, client_id, t, len(M), parameters_to_send)
-                    fedkd = parameters_to_send
-                else:
-                    parameters_to_send = fedkd
-                config['decompress'] = True
-                config['M'] = M
-                config['layers_fraction'] = layers_fraction
-                if fl_framework is None:
-                    config['parameters'] = parameters_to_send
-                    client_evaluate_list_fedpredict.append((client, config))
-                elif fl_framework =='flwr':
-                    if _has_flwr:
-                        evaluate_ins = EvaluateIns(ndarrays_to_parameters(parameters_to_send), config)
-                        client_evaluate_list_fedpredict.append((client, evaluate_ins))
-                    else:
-                        raise ImportError(
-                            "Flower is required. Digit: 'pip install fedpredict[flwr]' or 'pip install fedpredict[full]'")
-                continue
-            elif compression == 'sparsification':
-                k = 0.3
-
-                t, k_values = sparse_crs_top_k([np.abs(i) for i in parameters], k)
-                parameters_to_send = t
-                # print("contar2")
-                # print([len(i[i == 0]) for i in parameters_to_send])
-                config['decompress'] = False
-                config['M'] = M
-                config['layers_fraction'] = 1
-                if fl_framework is None:
-                    config['parameters'] = parameters_to_send
-                    client_evaluate_list_fedpredict.append((client, config))
-                elif fl_framework == 'flwr':
-                    if _has_flwr:
-                        evaluate_ins = EvaluateIns(ndarrays_to_parameters(parameters_to_send), config)
-                        client_evaluate_list_fedpredict.append((client, evaluate_ins))
-                    else:
-                        raise ImportError(
-                            "Flower is required. Digit: 'pip install fedpredict[flwr]' or 'pip install fedpredict[full]'")
-                continue
-
-            elif compression is None:
-                config['M'] = [i for i in range(len(parameters))]
-                config['decompress'] = False
-                config['layers_fraction'] = 1
-                if fl_framework is None:
-                    config['parameters'] = parameters
-                    client_evaluate_list_fedpredict.append((client, config))
-                elif fl_framework == 'flwr':
-                    if _has_flwr:
-                        evaluate_ins = EvaluateIns(ndarrays_to_parameters(parameters), config)
-                        client_evaluate_list_fedpredict.append((client, evaluate_ins))
-                    else:
-                        raise ImportError(
-                            "Flower is required. Digit: 'pip install fedpredict[flwr]' or 'pip install fedpredict[full]'")
-                continue
-
-            parameters_to_send = None
-
-            logger.info(f"Tamanho parametros antes: {([i.nbytes for i in parameters])}")
-
-            if process_parameters:
-                if "dls" in compression:
-                    parameters_to_send, M = dls(fedpredict_clients_metrics[client_id]['first_round'],
-                                                parameters, t, nt, T, df, size_of_parameters)
-                    logger.info(f"Tamanho parametros als: {sum(i.nbytes for i in parameters_to_send)}")
-                elif "per" in compression:
-                    parameters_to_send, M = per(fedpredict_clients_metrics[client_id]['first_round'],
-                                                parameters)
-                    logger.info(f"Tamanho parametros per: {sum([i.nbytes for i in parameters_to_send])}, {len(parameters_to_send)}, {len(M)}")
-                layers_fraction = []
-                if 'compredict' in compression:
-                    parameters_to_send = parameters_to_send if parameters_to_send is not None else parameters
-                    parameters_to_send, layers_fraction = compredict(
-                        fedpredict_clients_metrics[str(client_id)]['round_of_last_fit'], layers_compression_range,
-                        T, t, len(M), parameters_to_send)
-                    config['decompress'] = True
-                    pass
-                else:
-                    config['decompress'] = False
-                    logger.info("nao igual")
-                # config['decompress'] = False
-                logger.info(f"Novos parametros para nt: {nt}")
-                decompress = config['decompress']
-                previously_reduced_parameters[nt] = [copy.deepcopy(parameters_to_send), M, layers_fraction, decompress]
-
-            else:
-                logger.info(f"Reutilizou parametros de nt: {nt}")
-                parameters_to_send, M, layers_fraction, decompress = previously_reduced_parameters[nt]
-
-            parameters_to_send = [np.array(i) for i in parameters_to_send]
-            logger.info(f"Tamanho parametros compredict: {sum(i.nbytes for i in parameters_to_send)}")
-            for i in range(1, len(parameters)):
-                size_of_parameters.append(get_size(parameters[i]))
-            fedpredict_clients_metrics[str(client.cid)]['acc_bytes_rate'] = size_of_parameters
-            config['M'] = M
-            config['decompress'] = decompress
-            config['layers_fraction'] = layers_fraction
-            if fl_framework is None:
-                config['parameters'] = parameters_to_send
-                client_evaluate_list_fedpredict.append((client, config))
-            elif fl_framework == 'flwr':
-                if _has_flwr:
-                    evaluate_ins = EvaluateIns(ndarrays_to_parameters(parameters_to_send), config)
-                    client_evaluate_list_fedpredict.append((client, evaluate_ins))
-                else:
-                    raise ImportError("Flower is required. Digit: 'pip install fedpredict[flwr]' or 'pip install fedpredict[full]'")
-
-        return client_evaluate_list_fedpredict
-
-    except Exception as e:
-        logger.critical("Method: fedpredict server")
-        logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
+# def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], fedpredict_clients_metrics: Dict,
+#                       t: int, T: int, model_shape: List, compress=None,
+#                       df: float=0, fl_framework=None):
+#     """
+#
+#     Args:
+#         parameters: list[np.array], required
+#             List of numpy arrays
+#         client_evaluate_list: list[tuple], required
+#             List of clients' tuples
+#         fedpredict_clients_metrics: dict, required
+#             Dict of clients' metrics.
+#         t: int, required
+#         T: int, required
+#         df: float, optional. Default=0
+#             Layers' similarity difference. It is used when compression_method uses the "dls" technique.
+#         model_shape: list, optional
+#         compress: None, 'dls_compredict', 'dls', 'compredict', 'sparsification', 'fedkd', 'fedper'. Default=None
+#         fl_framework: None, 'flwr'. Default='flwr'
+#             Method for compressing the global model parameters before sending to thee clients
+#
+#     Returns: list[tuple]
+#
+#     """
+#     try:
+#
+#         client_evaluate_list_fedpredict = []
+#         accuracy = 0
+#         size_of_parameters = []
+#
+#         # Reuse previously compressed parameters
+#         previously_reduced_parameters = {}
+#         logger.info(f"compression technique: {compress}")
+#         if compress in ["fedkd", "compredict", "dls_compredict"]:
+#             layers_compression_range = layer_compression_range(model_shape)
+#         fedkd = None
+#         for client_tuple in client_evaluate_list:
+#             client = client_tuple["client"]
+#             client_id = client_tuple["cid"]
+#             config = client_tuple["config"]
+#             nt = client_tuple['nt']
+#             lt = client_tuple['lt']
+#             if nt != 0 and nt in previously_reduced_parameters:
+#                 process_parameters = False
+#             else:
+#                 process_parameters = True
+#
+#             if compress is None:
+#                 process_parameters = True
+#             config['nt'] = nt
+#             config['T'] = T
+#             M = [i for i in range(len(parameters))]
+#             parameters_to_send = None
+#             if nt == 0 and compress not in ["fedkd", None]:
+#                 config['M'] = []
+#                 config['decompress'] = False
+#                 config['layers_fraction'] = 0
+#                 if fl_framework is None:
+#                     config['parameters'] = np.array([])
+#                     client_evaluate_list_fedpredict.append((client, config))
+#                 elif fl_framework == 'flwr':
+#                     if _has_flwr:
+#                         evaluate_ins = EvaluateIns(ndarrays_to_parameters(np.array([])), config)
+#                         client_evaluate_list_fedpredict.append((client, evaluate_ins))
+#                     else:
+#                         raise ImportError(
+#                             "Flower is required. Digit: 'pip install fedpredict[flwr]' or 'pip install fedpredict[full]'")
+#                 continue
+#             elif compress == 'fedkd':
+#                 if fedkd is None:
+#                     parameters_to_send = parameters_to_send if parameters_to_send is not None else parameters
+#                     logger.info(f"dentro 1: {type(parameters_to_send[0])}, {len(parameters_to_send[0])}")
+#                     parameters_to_send, layers_fraction = fedkd_compression(
+#                         lt, layers_compression_range,
+#                         T, client_id, t, len(M), parameters_to_send)
+#                     fedkd = parameters_to_send
+#                 else:
+#                     parameters_to_send = fedkd
+#                 config['decompress'] = True
+#                 config['M'] = M
+#                 config['layers_fraction'] = layers_fraction
+#                 if fl_framework is None:
+#                     config['parameters'] = parameters_to_send
+#                     client_evaluate_list_fedpredict.append((client, config))
+#                 elif fl_framework =='flwr':
+#                     if _has_flwr:
+#                         evaluate_ins = EvaluateIns(ndarrays_to_parameters(parameters_to_send), config)
+#                         client_evaluate_list_fedpredict.append((client, evaluate_ins))
+#                     else:
+#                         raise ImportError(
+#                             "Flower is required. Digit: 'pip install fedpredict[flwr]' or 'pip install fedpredict[full]'")
+#                 continue
+#             elif compress == 'sparsification':
+#                 k = 0.3
+#
+#                 t, k_values = sparse_crs_top_k([np.abs(i) for i in parameters], k)
+#                 parameters_to_send = t
+#                 # print("contar2")
+#                 # print([len(i[i == 0]) for i in parameters_to_send])
+#                 config['decompress'] = False
+#                 config['M'] = M
+#                 config['layers_fraction'] = 1
+#                 if fl_framework is None:
+#                     config['parameters'] = parameters_to_send
+#                     client_evaluate_list_fedpredict.append((client, config))
+#                 elif fl_framework == 'flwr':
+#                     if _has_flwr:
+#                         evaluate_ins = EvaluateIns(ndarrays_to_parameters(parameters_to_send), config)
+#                         client_evaluate_list_fedpredict.append((client, evaluate_ins))
+#                     else:
+#                         raise ImportError(
+#                             "Flower is required. Digit: 'pip install fedpredict[flwr]' or 'pip install fedpredict[full]'")
+#                 continue
+#
+#             elif compress is None:
+#                 config['M'] = [i for i in range(len(parameters))]
+#                 config['decompress'] = False
+#                 config['layers_fraction'] = 1
+#                 if fl_framework is None:
+#                     config['parameters'] = parameters
+#                     client_evaluate_list_fedpredict.append((client, config))
+#                 elif fl_framework == 'flwr':
+#                     if _has_flwr:
+#                         evaluate_ins = EvaluateIns(ndarrays_to_parameters(parameters), config)
+#                         client_evaluate_list_fedpredict.append((client, evaluate_ins))
+#                     else:
+#                         raise ImportError(
+#                             "Flower is required. Digit: 'pip install fedpredict[flwr]' or 'pip install fedpredict[full]'")
+#                 continue
+#
+#             parameters_to_send = None
+#
+#             logger.info(f"Tamanho parametros antes: {([i.nbytes for i in parameters])}")
+#
+#             if process_parameters:
+#                 if "dls" in compress:
+#                     parameters_to_send, M = dls(fedpredict_clients_metrics[client_id]['first_round'],
+#                                                 parameters, t, nt, T, df, size_of_parameters)
+#                     logger.info(f"Tamanho parametros als: {sum(i.nbytes for i in parameters_to_send)}")
+#                 elif "per" in compress:
+#                     parameters_to_send, M = per(fedpredict_clients_metrics[client_id]['first_round'],
+#                                                 parameters)
+#                     logger.info(f"Tamanho parametros per: {sum([i.nbytes for i in parameters_to_send])}, {len(parameters_to_send)}, {len(M)}")
+#                 layers_fraction = []
+#                 if 'compredict' in compress:
+#                     parameters_to_send = parameters_to_send if parameters_to_send is not None else parameters
+#                     parameters_to_send, layers_fraction = compredict(
+#                         fedpredict_clients_metrics[str(client_id)]['round_of_last_fit'], layers_compression_range,
+#                         T, t, len(M), parameters_to_send)
+#                     config['decompress'] = True
+#                     pass
+#                 else:
+#                     config['decompress'] = False
+#                     logger.info("nao igual")
+#                 # config['decompress'] = False
+#                 logger.info(f"Novos parametros para nt: {nt}")
+#                 decompress = config['decompress']
+#                 previously_reduced_parameters[nt] = [copy.deepcopy(parameters_to_send), M, layers_fraction, decompress]
+#
+#             else:
+#                 logger.info(f"Reutilizou parametros de nt: {nt}")
+#                 parameters_to_send, M, layers_fraction, decompress = previously_reduced_parameters[nt]
+#
+#             parameters_to_send = [np.array(i) for i in parameters_to_send]
+#             logger.info(f"Tamanho parametros compredict: {sum(i.nbytes for i in parameters_to_send)}")
+#             for i in range(1, len(parameters)):
+#                 size_of_parameters.append(get_size(parameters[i]))
+#             fedpredict_clients_metrics[str(client.cid)]['acc_bytes_rate'] = size_of_parameters
+#             config['M'] = M
+#             config['decompress'] = decompress
+#             config['layers_fraction'] = layers_fraction
+#             if fl_framework is None:
+#                 config['parameters'] = parameters_to_send
+#                 client_evaluate_list_fedpredict.append((client, config))
+#             elif fl_framework == 'flwr':
+#                 if _has_flwr:
+#                     evaluate_ins = EvaluateIns(ndarrays_to_parameters(parameters_to_send), config)
+#                     client_evaluate_list_fedpredict.append((client, evaluate_ins))
+#                 else:
+#                     raise ImportError("Flower is required. Digit: 'pip install fedpredict[flwr]' or 'pip install fedpredict[full]'")
+#
+#         return client_evaluate_list_fedpredict
+#
+#     except Exception as e:
+#         logger.critical("Method: fedpredict server")
+#         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
 def compredict(round_of_last_fit, layers_comppression_range, num_rounds, server_round, M, parameter):
