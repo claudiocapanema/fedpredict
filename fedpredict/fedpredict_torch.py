@@ -139,7 +139,8 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
                             dh: dict[str,float]=None,
                             ps: dict[str,float]=None,
                             knowledge_distillation:bool=False,
-                            decompress: bool=False,
+                            original_global_model_shape: list[tuple]=None,
+                            decompress_mode : str=None,
                             logs: bool=False
                             )-> torch.nn.Module:
     """
@@ -192,7 +193,9 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
             knowledge_distillation: bool, optional. Default=False
                 If the model has knowledge distillation, then set True, to indicate that the global model parameters have
                 to be combined with the student model
-            decompress: bool, optional. Default=False
+            original_global_model_shape: list[tuple]
+                The original shape of the global model (without compression). Used with ``decompress_mode".
+            decompress_mode: bool, optional. Default=False
                 Whether or not to decompress global model parameters in case a previous compression was applied. Only set
                 True if using "FedPredict_server" and compressing the shared parameters.
             logs: bool, optional. Default=False
@@ -211,21 +214,12 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
             raise ImportError("Framework 'torch' not found")
 
         local_model = copy.deepcopy(local_model).to(device)
-        global_model = copy.deepcopy(global_model).to(device)
+        if type(global_model) == torch.nn.Module:
+            global_model = copy.deepcopy(global_model).to(device)
+        elif type(global_model) == list and type(original_global_model_shape) == list:
+            assert len(original_global_model_shape) > 0, "original_global_model_shape must not be empty"
 
-        # if s is None and fc is None and il is None and dh is None and ps is None:
-        #
-        #     combined_local_model = fedpredict_client_traditional_torch(local_model=local_model,
-        #                                                                global_model=global_model,
-        #                                                                t=t,
-        #                                                                T=T,
-        #                                                                nt=nt,
-        #                                                                device=device,
-        #                                                                M=M,
-        #                                                                knowledge_distillation=knowledge_distillation,
-        #                                                                decompress=decompress,
-        #                                                                fc=fc,
-        #                                                                il=il)
+            global_model = decompress_global_parameters(global_model, original_global_model_shape, M, decompress_mode)
 
         assert t >= 0, f"t must be greater or equal than 0, but you passed {t}"
         assert (T >= t and T >= 0), f"T must be greater than t, but you passed t: {t} and T: {T}"
@@ -261,7 +255,7 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
                                                                 dh=dh,
                                                                 ps=ps,
                                                                 knowledge_distillation=knowledge_distillation,
-                                                                decompress=decompress,
+                                                                decompress=original_global_model_shape,
                                                                 logs=logs)
 
         return combined_local_model.to(device)
@@ -388,10 +382,10 @@ def torch_to_list_of_numpy(model: torch.nn.Module):
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
-def decompress_global_parameters(compressed_global_model_parameters, model_shape, M, decompress):
+def decompress_global_parameters(compressed_global_model_parameters, original_global_model_shape, M, decompress):
     try:
         if decompress and len(compressed_global_model_parameters) > 0:
-            decompressed_gradients = inverse_parameter_svd_reading(compressed_global_model_parameters, model_shape,
+            decompressed_gradients = inverse_parameter_svd_reading(compressed_global_model_parameters, original_global_model_shape,
                                                                    len(M))
             parameters = [torch.Tensor(i.tolist()) for i in decompressed_gradients]
         else:
