@@ -139,7 +139,6 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
                             ps: dict[str,float]=None,
                             knowledge_distillation:bool=False,
                             global_model_original_shape: list[tuple]=None,
-                            decompress_mode : str=None,
                             logs: bool=False
                             )-> torch.nn.Module:
     """
@@ -194,10 +193,7 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
                 If the model has knowledge distillation, then set True, to indicate that the global model parameters have
                 to be combined with the student model
             global_model_original_shape: list[tuple]
-                The original shape of the global model (without compression). Used with ``decompress_mode".
-            decompress_mode: bool, optional. Default=False
-                Whether or not to decompress global model parameters in case a previous compression was applied. Only set
-                True if using "FedPredict_server" and compressing the shared parameters.
+                The original shape of the global model (without compression). Used when compŕession is applied by ``fedpredict_server``.
             logs: bool, optional. Default=False
                 Whether or not to log the results of the combination process.
 
@@ -219,7 +215,7 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
         elif type(global_model) == list and type(global_model_original_shape) == list:
             assert len(global_model_original_shape) > 0, "original_global_model_shape must not be empty"
             logger.info(f"antes: {[i.shape for i in global_model]}")
-            global_model = decompress_global_parameters(global_model, global_model_original_shape, local_model, decompress_mode)
+            global_model = decompress_global_parameters(global_model, global_model_original_shape, local_model)
             logger.info(f"descomprimido {[i.shape for i in global_model.parameters()]} shape {global_model_original_shape} o")
 
         assert t >= 0, f"t must be greater or equal than 0, but you passed {t}"
@@ -312,9 +308,9 @@ def torch_to_list_of_numpy(model: torch.nn.Module):
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
-def decompress_global_parameters(compressed_global_model_parameters: List[NDArrays], global_model_original_shape: List[Tuple], model_base: torch.nn.Module, decompress: str):
+def decompress_global_parameters(compressed_global_model_parameters: List[NDArrays], global_model_original_shape: List[Tuple], model_base: torch.nn.Module):
     try:
-        if decompress and len(compressed_global_model_parameters) > 0:
+        if len(compressed_global_model_parameters) > 0:
             decompressed_gradients = inverse_parameter_svd_reading(compressed_global_model_parameters, global_model_original_shape)
             parameters = [torch.Tensor(i.tolist()) for i in decompressed_gradients]
         else:
