@@ -64,7 +64,6 @@ def fedkd_compression_core(parameters, energy):
                 continue
 
             if len(u.shape) == 4:
-                print("u shape: ", u.shape, "s shape: ", s.shape, " v shape: ", v.shape)
                 u = np.transpose(u, (2, 3, 0, 1))
                 s = np.transpose(s, (2, 0, 1))
                 v = np.transpose(v, (2, 3, 0, 1))
@@ -73,9 +72,7 @@ def fedkd_compression_core(parameters, energy):
                 continue
             else:
                 for singular_value_num in range(len(s)):
-                    print("lef: ", np.sum(np.square(s[:singular_value_num])) , " rig: ", energy * np.sum(np.square(s)))
                     if np.sum(np.square(s[:singular_value_num])) > energy * np.sum(np.square(s)):
-                        print("aumentou: ", singular_value_num)
                         threshold = singular_value_num
                         break
                 u = u[:, :threshold]
@@ -90,9 +87,6 @@ def fedkd_compression_core(parameters, energy):
                 parameters[i] = u
                 parameters[i + 1] = v
                 parameters[i + 2] = s
-
-        for i in parameters:
-            print(i.shape)
 
         return parameters
 
@@ -122,25 +116,14 @@ def fedkd_compression(lt, layers_compression_range, T, t, M, parameter):
 
             n_components_list.append(n_components)
 
-        print("Vetor de componentes: ", n_components_list)
+        logger.debug(f"Vetor de componentes: {n_components_list}")
 
         parameter = parameter_svd_write(parameter, n_components_list)
         tmin = 0.01
         tmax = 0.95
         energy = tmin + (tmax-tmin)*(t / T)
-        print("energy: ", energy)
+        logger.debug(f"energy: {energy}")
         parameter = fedkd_compression_core(parameter, energy)
-
-        # else:
-        #     new_parameter = []
-        #     for param in parameter:
-        #         new_parameter.append(np.array(param))
-        #         new_parameter.append(np.array([]))
-        #         new_parameter.append(np.array([]))
-        #
-        #     parameter = copy.deepcopy(new_parameter)
-        #
-        #     layers_fraction = [1] * len(parameter)
         parameter = [np.array(i) for i in parameter]
 
         return parameter, layers_fraction

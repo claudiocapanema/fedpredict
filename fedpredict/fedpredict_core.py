@@ -637,7 +637,6 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], t
             elif compression == 'fedkd':
                 if fedkd is None:
                     parameters_to_send = parameters_to_send if parameters_to_send is not None else parameters
-                    logger.info(f"dentro 1")
                     parameters_to_send, layers_fraction = fedkd_compression(lt, layers_compression_range, T, t, len(M),
                                                                             parameters_to_send)
                     fedkd = parameters_to_send
