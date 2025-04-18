@@ -1,6 +1,57 @@
 import sys
+import logging
 from fedpredict.utils.compression_methods.parameters_svd import parameter_svd_write, inverse_parameter_svd_reading, if_reduces_size
 import numpy as np
+
+class CustomFormatter(logging.Formatter):
+    """Logging colored formatter, adapted from https://stackoverflow.com/a/56944256/3638629"""
+
+    grey = '\x1b[38;21m'
+    blue = '\x1b[38;5;39m'
+    yellow = '\x1b[38;5;226m'
+    red = '\x1b[38;5;196m'
+    bold_red = '\x1b[31;1m'
+    reset = '\x1b[0m'
+
+    def __init__(self, fmt):
+        super().__init__()
+        self.fmt = fmt
+        self.FORMATS = {
+            logging.DEBUG: self.grey + self.fmt + self.reset,
+            logging.INFO: self.blue + self.fmt + self.reset,
+            logging.WARNING: self.yellow + self.fmt + self.reset,
+            logging.ERROR: self.red + self.fmt + self.reset,
+            logging.CRITICAL: self.bold_red + self.fmt + self.reset
+        }
+
+    def format(self, record):
+        log_fmt = self.FORMATS.get(record.levelno)
+        formatter = logging.Formatter(log_fmt)
+        return formatter.format(record)
+
+import datetime
+
+# Create custom logger logging all five levels
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+# Define format for logs
+fmt = '%(asctime)s | %(levelname)8s | %(message)s'
+
+# Create stdout handler for logging to the console (logs all five levels)
+stdout_handler = logging.StreamHandler()
+stdout_handler.setLevel(logging.DEBUG)
+stdout_handler.setFormatter(CustomFormatter(fmt))
+
+# Create file handler for logging to a file (logs all five levels)
+today = datetime.date.today()
+file_handler = logging.FileHandler('my_app_{}.log'.format(today.strftime('%Y_%m_%d')))
+file_handler.setLevel(logging.DEBUG)
+file_handler.setFormatter(logging.Formatter(fmt))
+
+# Add both handlers to the logger
+logger.addHandler(stdout_handler)
+logger.addHandler(file_handler)
 
 def fedkd_compression_core(parameters, energy):
     try:
@@ -45,48 +96,54 @@ def fedkd_compression_core(parameters, energy):
 
         return parameters
 
+
     except Exception as e:
-        print("fedkd compression_methods core")
-        print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
 
-def fedkd_compression(round_of_last_fit, layers_compression_range, num_rounds, client_id, server_round, M, parameter):
+        logger.critical("Method: fedkd_compression_core")
 
-    nt = server_round - round_of_last_fit
-    layers_fraction = []
-    n_components_list = []
-    for i in range(M):
-        # if i % 2 == 0:
-        layer = parameter[i]
-        if len(layer.shape) >= 2:
+        logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
-            if layers_compression_range[i] > 0:
-                n_components = layers_compression_range[i]
+def fedkd_compression(lt, layers_compression_range, T, t, M, parameter):
+    try:
+        nt = t - lt
+        layers_fraction = []
+        n_components_list = []
+        for i in range(M):
+            # if i % 2 == 0:
+            layer = parameter[i]
+            if len(layer.shape) >= 2:
+
+                if layers_compression_range[i] > 0:
+                    n_components = layers_compression_range[i]
+                else:
+                    n_components = None
             else:
                 n_components = None
-        else:
-            n_components = None
 
-        n_components_list.append(n_components)
+            n_components_list.append(n_components)
 
-    print("Vetor de componentes: ", n_components_list)
+        print("Vetor de componentes: ", n_components_list)
 
-    parameter = parameter_svd_write(parameter, n_components_list)
-    tmin = 0.01
-    tmax = 0.95
-    energy = tmin + (tmax-tmin)*(server_round/num_rounds)
-    print("energy: ", energy)
-    parameter = fedkd_compression_core(parameter, energy)
+        parameter = parameter_svd_write(parameter, n_components_list)
+        tmin = 0.01
+        tmax = 0.95
+        energy = tmin + (tmax-tmin)*(t / T)
+        print("energy: ", energy)
+        parameter = fedkd_compression_core(parameter, energy)
 
-    # else:
-    #     new_parameter = []
-    #     for param in parameter:
-    #         new_parameter.append(np.array(param))
-    #         new_parameter.append(np.array([]))
-    #         new_parameter.append(np.array([]))
-    #
-    #     parameter = copy.deepcopy(new_parameter)
-    #
-    #     layers_fraction = [1] * len(parameter)
-    parameter = [np.array(i) for i in parameter]
+        # else:
+        #     new_parameter = []
+        #     for param in parameter:
+        #         new_parameter.append(np.array(param))
+        #         new_parameter.append(np.array([]))
+        #         new_parameter.append(np.array([]))
+        #
+        #     parameter = copy.deepcopy(new_parameter)
+        #
+        #     layers_fraction = [1] * len(parameter)
+        parameter = [np.array(i) for i in parameter]
 
-    return parameter, layers_fraction
+        return parameter, layers_fraction
+    except Exception as e:
+        logger.critical("Method: fedkd_compression")
+        logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
