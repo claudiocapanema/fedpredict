@@ -214,9 +214,8 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
             global_model = copy.deepcopy(global_model).to(device)
         elif type(global_model) == list and type(global_model_original_shape) == list:
             assert len(global_model_original_shape) > 0, "original_global_model_shape must not be empty"
-            logger.info(f"antes: {[i.shape for i in global_model]}")
-            global_model = decompress_global_parameters(global_model, global_model_original_shape, local_model)
-            logger.info(f"descomprimido {[i.shape for i in global_model.parameters()]} shape {global_model_original_shape} o")
+            global_model = decompress_global_parameters(global_model, global_model_original_shape, local_model).to(device)
+            # logger.info(f"descomprimido {[i.shape for i in global_model.parameters()]} shape {global_model_original_shape} o")
 
         assert t >= 0, f"t must be greater or equal than 0, but you passed {t}"
         assert (T >= t and T >= 0), f"T must be greater than t, but you passed t: {t} and T: {T}"
@@ -251,7 +250,6 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
                                                                 dh=dh,
                                                                 ps=ps,
                                                                 knowledge_distillation=knowledge_distillation,
-                                                                decompress=global_model_original_shape,
                                                                 logs=logs)
 
         return combined_local_model.to(device)
@@ -272,19 +270,13 @@ def fedpredict_client_versions_torch(local_model: torch.nn.Module,
                                      dh: dict[str, float] = None,
                                      ps: dict[str, float] = None,
                                      knowledge_distillation=False,
-                                     decompress=False,
-                                     logs=False) -> torch.nn.Module:
+                                     logs: bool = False) -> torch.nn.Module:
 
     # Using 'torch.load'
     try:
         number_of_layers_local_model = count_layers(local_model)
         number_of_layers_global_model = count_layers(global_model)
         M = [i for i in range(number_of_layers_local_model)]
-        # print("comprimido: ", len(model_shape))
-        # global_model = decompress_global_parameters(global_model, model_shape, M, decompress)
-        global_model = global_model.to("cuda")
-        # print("shape modelo: ", model_shape)
-        # print("descomprimido: ", [i.shape for i in global_model])
 
         if number_of_layers_local_model != number_of_layers_global_model:
             raise Exception("""Lenght of parameters of the global model is {} and is different from the M {}""".format(

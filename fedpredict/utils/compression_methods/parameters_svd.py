@@ -143,27 +143,21 @@ def if_reduces_size(shape, n_components, dtype=np.float64):
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
-def inverse_parameter_svd_reading(arrays, model_shape, M=0):
+def inverse_parameter_svd_reading(arrays, model_shape):
     try:
         M = len(model_shape)
         reconstructed_model = []
         for i in range(M):
             layer_shape = model_shape[i]
-            # print("i32: ", i*3+2)
-            # print("valor i: ", i, i*3, len(model_shape), len(arrays), "valor de M: ", M)
             u = arrays[i*3]
             v = arrays[i*3 + 1]
 
             si = arrays[i*3 + 2]
-            # print("teste", u.shape, v.shape, si.shape, layer_shape)
-            # print("maior: ", i*3 + 2, len(arrays))
-            logger.info(f"inverso {i} layer shape: {layer_shape}")
             if len(layer_shape) == 1:
                 parameter_layer = inverse_parameter_svd(u, v, layer_shape)
             else:
                 parameter_layer = inverse_parameter_svd(u, v, layer_shape, si)
             if parameter_layer is None:
-                # print("Pos ", i, i*3)
                 pass
             reconstructed_model.append(parameter_layer)
 
