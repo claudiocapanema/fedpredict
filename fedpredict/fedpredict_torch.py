@@ -161,7 +161,8 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
             Usage:
         Args:
             local_model: torch.nn.Module, required.
-            global_model: list[np.array], required.
+            global_model: Union[torch.nn.Module, List[NDArrays]], required.
+                It is ``torch.nn.Module" when no compression was applied, while it is ``List[NDArrays]" when compression was applied.
             p: list[float], required.
             t: int, required.
                 The current round.
@@ -265,75 +266,6 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
-def fedpredict_client_traditional_torch(local_model: torch.nn.Module,
-                                        global_model: Union[torch.nn.Module, List[NDArrays]],
-                                        t: int,
-                                        T: int,
-                                        nt: int,
-                                        device: str,
-                                        M: List=[],
-                                        knowledge_distillation=False,
-                                        decompress=False,
-                                        fc=1.,
-                                        il=1.) -> torch.nn.Module:
-    """
-        FedPredict v.1 presented in https://ieeexplore.ieee.org/abstract/document/10257293
-        This method combines global and local parameters, providing both generalization and personalization.
-        It also prevents drop in the accuracy when new/untrained clients are evaluated
-        Args:
-            local_model: torch.nn.Module, required
-            global_model: list[np.array], required
-            t: int, required
-            T: int, required
-            nt: int, required
-            M: list, optional. Default
-                The list of the indexes of the shared global model layers
-            knowledge_distillation: bool, optional. Default=False
-                If the model has knowledge distillation, then set True, to indicate that the global model parameters have
-                to be combined with the student model
-            decompress: bool, optional. Default=False
-               Whether or not to decompress global model parameters in case a previous compression was applied. Only set
-               True if using "FedPredict_server" and compressing the shared parameters.
-
-        Returns: torch.nn.Module
-            The combined model
-
-        """
-    # Using 'torch.load'
-    try:
-        # if knowledge_distillation:
-        #     model_shape = [i.detach().cpu().numpy().shape for i in local_model.student.parameters()]
-        # else:
-        #     model_shape = [i.detach().cpu().numpy().shape for i in local_model.parameters()]
-        # # if type(global_model) != list:
-        # #     global_model = torch_to_list_of_numpy(global_model)
-        # if len(M) == 0:
-        #     M = [i for i in range(len(torch_to_list_of_numpy(global_model)))]
-        number_of_layers_local_model = count_layers(local_model)
-        number_of_layers_global_model = count_layers(global_model)
-        M = [i for i in range(number_of_layers_local_model)]
-        # print("comprimido: ", len(model_shape))
-        # global_model = decompress_global_parameters(global_model, model_shape, M, decompress)
-        global_model = global_model.to(device)
-        local_model = local_model.to(device)
-        # print("shape modelo: ", model_shape)
-        # print("descomprimido: ", [i.shape for i in global_model])
-
-        if number_of_layers_local_model != number_of_layers_global_model:
-            raise Exception("""Lenght of parameters of the global model is {} and is different from the M {}""".format(len(global_model), len(M)))
-
-
-        local_model = local_model.to(device)
-        local_model = fedpredict_combine_models(global_model, local_model, t, T, nt, M, knowledge_distillation, fc, il)
-        local_model = local_model.to(device)
-
-        return local_model
-
-    except Exception as e:
-        print("FedPredict client traditional torch")
-        print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
-
-
 def fedpredict_client_versions_torch(local_model: torch.nn.Module,
                                      global_model: Union[torch.nn.Module, List[NDArrays]],
                                      t: int,
@@ -382,7 +314,7 @@ def torch_to_list_of_numpy(model: torch.nn.Module):
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
-def decompress_global_parameters(compressed_global_model_parameters, original_global_model_shape, M, decompress):
+def decompress_global_parameters(compressed_global_model_parameters: List[NDArrays], original_global_model_shape: List[Tuple], M: List, decompress: str):
     try:
         if decompress and len(compressed_global_model_parameters) > 0:
             decompressed_gradients = inverse_parameter_svd_reading(compressed_global_model_parameters, original_global_model_shape,

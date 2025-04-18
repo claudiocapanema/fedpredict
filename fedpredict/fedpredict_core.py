@@ -565,7 +565,7 @@ def get_size(parameter):
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], t: int, T: int, model_shape: List,
-                          compression_method=None, df: float = 0, fl_framework=None)-> Union[List[Dict, Tuple[int, Dict]]]:
+                      compression=None, df: float = 0, fl_framework=None)-> Union[List[Dict, Tuple[int, Dict]]]:
     """
 
     Args:
@@ -580,7 +580,7 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], t
         df: float, optional. Default=0
             Layers' similarity difference. It is used when compression_method uses the "dls" technique.
         model_shape: list, optional
-        compression_method: None, 'dls_compredict', 'dls', 'compredict', 'sparsification', 'fedkd', 'fedper'. Default=None
+        compression: None, 'dls_compredict', 'dls', 'compredict', 'sparsification', 'fedkd', 'fedper'. Default=None
         fl_framework: None, 'flwr'. Default='flwr'
             Method for compressing the global model parameters before sending to thee clients
 
@@ -589,15 +589,15 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], t
     """
     try:
         parameters = [i.detach().cpu().numpy() for i in parameters.parameters()]
-        original_global_model_shape = [i.shape for i in parameters]
+        global_model_original_shape = [i.shape for i in parameters]
         client_evaluate_list_fedpredict = []
         accuracy = 0
         size_of_parameters = []
 
         # Reuse previously compressed parameters
         previously_reduced_parameters = {}
-        logger.info(f"compression technique: {compression_method}")
-        if compression_method in ["fedkd", "compredict", "dls_compredict"]:
+        logger.info(f"compression technique: {compression}")
+        if compression in ["fedkd", "compredict", "dls_compredict"]:
             layers_compression_range = layer_compression_range(model_shape)
         fedkd = None
         for client_tuple in client_evaluate_list:
@@ -610,7 +610,7 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], t
             else:
                 process_parameters = True
 
-            if compression_method is None:
+            if compression is None:
                 process_parameters = True
             config = {}
             config['nt'] = nt
@@ -618,13 +618,13 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], t
             M = [i for i in range(len(model_shape))]
             parameters_to_send = None
             # When client trained in the current round (nt=0) it is not needed to send parameters (local model is already updated)
-            if nt == 0 and compression_method not in ["fedkd", None]:
+            if nt == 0 and compression not in ["fedkd", None]:
                 config['M'] = []
                 config['decompress'] = False
                 config['layers_fraction'] = 0
                 if fl_framework is None:
                     config['parameters'] = np.array([])
-                    config['original_global_model_shape'] = original_global_model_shape
+                    config['global_model_original_shape'] = global_model_original_shape
                     client_evaluate_list_fedpredict.append(config)
                 elif fl_framework == 'flwr':
                     if _has_flwr:
@@ -634,7 +634,7 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], t
                         raise ImportError(
                             "Flower is required. Digit: 'pip install fedpredict[flwr]' or 'pip install fedpredict[full]'")
                 continue
-            elif compression_method == 'fedkd':
+            elif compression == 'fedkd':
                 if fedkd is None:
                     parameters_to_send = parameters_to_send if parameters_to_send is not None else parameters
                     logger.info(f"dentro 1")
@@ -649,7 +649,7 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], t
                 config['layers_fraction'] = layers_fraction
                 if fl_framework is None:
                     config['parameters'] = parameters_to_send
-                    config['original_global_model_shape'] = original_global_model_shape
+                    config['global_model_original_shape'] = global_model_original_shape
                     client_evaluate_list_fedpredict.append(config)
                 elif fl_framework =='flwr':
                     if _has_flwr:
@@ -659,7 +659,7 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], t
                         raise ImportError(
                             "Flower is required. Digit: 'pip install fedpredict[flwr]' or 'pip install fedpredict[full]'")
                 continue
-            elif compression_method == 'sparsification':
+            elif compression == 'sparsification':
                 k = 0.3
 
                 t, k_values = sparse_crs_top_k([np.abs(i) for i in parameters], k)
@@ -669,7 +669,7 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], t
                 config['layers_fraction'] = 1
                 if fl_framework is None:
                     config['parameters'] = parameters_to_send
-                    config['original_global_model_shape'] = original_global_model_shape
+                    config['global_model_original_shape'] = global_model_original_shape
                     client_evaluate_list_fedpredict.append(config)
                 elif fl_framework == 'flwr':
                     if _has_flwr:
@@ -680,13 +680,13 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], t
                             "Flower is required. Digit: 'pip install fedpredict[flwr]' or 'pip install fedpredict[full]'")
                 continue
 
-            elif compression_method is None:
+            elif compression is None:
                 config['M'] = [i for i in range(len(parameters))]
                 config['decompress'] = False
                 config['layers_fraction'] = 1
                 if fl_framework is None:
                     config['parameters'] = parameters
-                    config['original_global_model_shape'] = original_global_model_shape
+                    config['global_model_original_shape'] = global_model_original_shape
                     client_evaluate_list_fedpredict.append(config)
                 elif fl_framework == 'flwr':
                     if _has_flwr:
@@ -702,14 +702,14 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], t
             logger.info(f"Tamanho parametros antes: {sum([i.nbytes for i in parameters])}")
 
             if process_parameters:
-                if "dls" in compression_method:
+                if "dls" in compression:
                     parameters_to_send, M = dls(lt, parameters, t, nt, T, df, size_of_parameters)
                     logger.info(f"Tamanho parametros als: {sum(i.nbytes for i in parameters_to_send)}")
-                elif "per" in compression_method:
+                elif "per" in compression:
                     parameters_to_send, M = per(lt, parameters)
                     logger.info(f"Tamanho parametros per: {sum(i.nbytes for i in parameters_to_send)}, {len(parameters_to_send)}, {len(M)}")
                 layers_fraction = []
-                if 'compredict' in compression_method:
+                if 'compredict' in compression:
                     parameters_to_send = parameters_to_send if parameters_to_send is not None else parameters
                     parameters_to_send, layers_fraction = compredict(
                         lt, layers_compression_range,
@@ -738,7 +738,7 @@ def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], t
             config['layers_fraction'] = layers_fraction
             if fl_framework is None:
                 config['parameters'] = parameters_to_send
-                config['original_global_model_shape'] = original_global_model_shape
+                config['global_model_original_shape'] = global_model_original_shape
                 client_evaluate_list_fedpredict.append(config)
             elif fl_framework == 'flwr':
                 if _has_flwr:
