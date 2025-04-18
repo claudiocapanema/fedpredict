@@ -565,7 +565,7 @@ def get_size(parameter):
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 def fedpredict_server(parameters: np.array, client_evaluate_list: List[Tuple], t: int, T: int, model_shape: List,
-                      compression=None, df: float = 0, fl_framework=None)-> Union[List[Dict, Tuple[int, Dict]]]:
+                      compression=None, df: float = 0, fl_framework=None)-> Union[List[Dict], Tuple[int, Dict]]:
     """
 
     Args:

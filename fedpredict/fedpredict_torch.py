@@ -132,14 +132,13 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
                             T: int,
                             nt: int,
                             device="cpu",
-                            M: List=[],
                             s: float=1,
                             fc: dict[str,float]=None,
                             il: dict[str,float]=None,
                             dh: dict[str,float]=None,
                             ps: dict[str,float]=None,
                             knowledge_distillation:bool=False,
-                            original_global_model_shape: list[tuple]=None,
+                            global_model_original_shape: list[tuple]=None,
                             decompress_mode : str=None,
                             logs: bool=False
                             )-> torch.nn.Module:
@@ -194,7 +193,7 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
             knowledge_distillation: bool, optional. Default=False
                 If the model has knowledge distillation, then set True, to indicate that the global model parameters have
                 to be combined with the student model
-            original_global_model_shape: list[tuple]
+            global_model_original_shape: list[tuple]
                 The original shape of the global model (without compression). Used with ``decompress_mode".
             decompress_mode: bool, optional. Default=False
                 Whether or not to decompress global model parameters in case a previous compression was applied. Only set
@@ -217,10 +216,11 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
         local_model = copy.deepcopy(local_model).to(device)
         if type(global_model) == torch.nn.Module:
             global_model = copy.deepcopy(global_model).to(device)
-        elif type(global_model) == list and type(original_global_model_shape) == list:
-            assert len(original_global_model_shape) > 0, "original_global_model_shape must not be empty"
-
-            global_model = decompress_global_parameters(global_model, original_global_model_shape, M, decompress_mode)
+        elif type(global_model) == list and type(global_model_original_shape) == list:
+            assert len(global_model_original_shape) > 0, "original_global_model_shape must not be empty"
+            logger.info(f"antes: {[i.shape for i in global_model]}")
+            global_model = decompress_global_parameters(global_model, global_model_original_shape, local_model, decompress_mode)
+            logger.info(f"descomprimido {[i.shape for i in global_model.parameters()]} shape {global_model_original_shape} o")
 
         assert t >= 0, f"t must be greater or equal than 0, but you passed {t}"
         assert (T >= t and T >= 0), f"T must be greater than t, but you passed t: {t} and T: {T}"
@@ -249,14 +249,13 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
                                                                 t=t,
                                                                 T=T,
                                                                 nt=nt,
-                                                                M=M,
                                                                 s=s,
                                                                 fc=fc,
                                                                 il=il,
                                                                 dh=dh,
                                                                 ps=ps,
                                                                 knowledge_distillation=knowledge_distillation,
-                                                                decompress=original_global_model_shape,
+                                                                decompress=global_model_original_shape,
                                                                 logs=logs)
 
         return combined_local_model.to(device)
@@ -267,11 +266,10 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
 
 
 def fedpredict_client_versions_torch(local_model: torch.nn.Module,
-                                     global_model: Union[torch.nn.Module, List[NDArrays]],
+                                     global_model: torch.nn.Module,
                                      t: int,
                                      T: int,
                                      nt: int,
-                                     M:List,
                                      s: float,
                                      fc: dict[str, float] = None,
                                      il: dict[str, float] = None,
@@ -314,16 +312,19 @@ def torch_to_list_of_numpy(model: torch.nn.Module):
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
-def decompress_global_parameters(compressed_global_model_parameters: List[NDArrays], original_global_model_shape: List[Tuple], M: List, decompress: str):
+def decompress_global_parameters(compressed_global_model_parameters: List[NDArrays], global_model_original_shape: List[Tuple], model_base: torch.nn.Module, decompress: str):
     try:
         if decompress and len(compressed_global_model_parameters) > 0:
-            decompressed_gradients = inverse_parameter_svd_reading(compressed_global_model_parameters, original_global_model_shape,
-                                                                   len(M))
+            decompressed_gradients = inverse_parameter_svd_reading(compressed_global_model_parameters, global_model_original_shape)
             parameters = [torch.Tensor(i.tolist()) for i in decompressed_gradients]
         else:
             parameters = [torch.Tensor(i.tolist()) for i in compressed_global_model_parameters]
 
-        return parameters
+        model_base = copy.deepcopy(model_base)
+        for new_param, old_param in zip(parameters, model_base.parameters()):
+            old_param.data = new_param.data.clone()
+
+        return model_base
 
     except Exception as e:
         logger.critical("Method: decompress_global_parameters")
@@ -377,7 +378,7 @@ def fedpredict_dynamic_combine_models(global_parameters, model, t, T, nt, M, s, 
                     old_param.data = (
                             global_model_weight * new_param.data.clone() + local_model_weights * old_param.data.clone())
                 else:
-                    raise ValueError(f"Layer {count} has different shapes: {new_param.shape} and {old_param.shape}")
+                    raise ValueError(f"Layer {count} has different shapes: global model {new_param.shape} and local model {old_param.shape}")
             count += 1
 
         return model
@@ -388,7 +389,7 @@ def fedpredict_dynamic_combine_models(global_parameters, model, t, T, nt, M, s, 
 
 def count_layers(model):
     contador = 0
-    for nome, modulo in model.named_modules():
+    for i in model.parameters():
         # Contar apenas módulos que são instâncias de camadas com parâmetros (Linear, Conv2d, etc.)
         contador += 1
     return contador
