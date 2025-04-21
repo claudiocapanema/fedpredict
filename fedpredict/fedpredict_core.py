@@ -220,7 +220,7 @@ def dls(lt, parameters,
     try:
         M = [i for i in range(len(parameters))]
         n_layers = len(parameters) / 2
-
+        print("quantidade original ", M)
         # return parameters, M
 
         size_list = []
@@ -229,9 +229,9 @@ def dls(lt, parameters,
             size_list.append(tamanho)
         if lt != 0:
             # baixo-cima
-            print("quantidade original ", M)
+
             M = fedpredict_core_layer_selection(t=server_round, T=num_rounds, nt=nt, n_layers=n_layers, df=df)
-            print("novo ", M)
+
             new_parameters = []
             for i in range(len(parameters)):
                 if i in M:
@@ -242,7 +242,7 @@ def dls(lt, parameters,
         for i in range(len(parameters)):
             tamanho = parameters[i].nbytes
             size_list.append(tamanho)
-
+        print("novo ", M)
         return parameters, M
 
     except Exception as e:

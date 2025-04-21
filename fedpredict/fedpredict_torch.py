@@ -301,15 +301,32 @@ def torch_to_list_of_numpy(model: torch.nn.Module):
 
 def decompress_global_parameters(compressed_global_model_parameters: List[NDArrays], global_model_original_shape: List[Tuple], model_base: torch.nn.Module):
     try:
-        if len(compressed_global_model_parameters) > 0:
+        is_layer_selection = False
+        for i in range(len(compressed_global_model_parameters)):
+            compressed_shape = compressed_global_model_parameters[i].shape
+            original_shape = global_model_original_shape[i]
+            if compressed_shape != original_shape:
+                is_layer_selection = False
+            else:
+                is_layer_selection = True
+                break
+
+        print("is_layer_selection", is_layer_selection)
+
+        if len(compressed_global_model_parameters) > 0 and not is_layer_selection:
             decompressed_gradients = inverse_parameter_svd_reading(compressed_global_model_parameters, global_model_original_shape)
             parameters = [torch.Tensor(i.tolist()) for i in decompressed_gradients]
         else:
             parameters = [torch.Tensor(i.tolist()) for i in compressed_global_model_parameters]
 
         model_base = copy.deepcopy(model_base)
+        size = len(parameters)
+        count = 0
         for new_param, old_param in zip(parameters, model_base.parameters()):
             old_param.data = new_param.data.clone()
+            count += 1
+            if count == size:
+                break
 
         return model_base
 
