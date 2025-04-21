@@ -301,7 +301,10 @@ def torch_to_list_of_numpy(model: torch.nn.Module):
 
 def decompress_global_parameters(compressed_global_model_parameters: List[NDArrays], global_model_original_shape: List[Tuple], model_base: torch.nn.Module):
     try:
-        is_layer_selection = False
+        if len(compressed_global_model_parameters) == 0:
+            is_layer_selection = True
+        else:
+            is_layer_selection = False
         for i in range(len(compressed_global_model_parameters)):
             compressed_shape = compressed_global_model_parameters[i].shape
             original_shape = global_model_original_shape[i]
