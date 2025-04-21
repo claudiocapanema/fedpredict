@@ -145,7 +145,7 @@ def if_reduces_size(shape, n_components, dtype=np.float64):
 
 def inverse_parameter_svd_reading(arrays, model_shape):
     try:
-        M = len(model_shape)
+        M = len(arrays)
         reconstructed_model = []
         for i in range(M):
             layer_shape = model_shape[i]
@@ -164,7 +164,7 @@ def inverse_parameter_svd_reading(arrays, model_shape):
         return reconstructed_model
 
     except Exception as e:
-        logger.critical("inverse_paramete_svd")
+        logger.critical("inverse_paramete_svd_reading")
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
@@ -172,7 +172,7 @@ def inverse_parameter_svd(u, v, layer_index, sigma=None, sig_ind=None):
     try:
         if len(v) == 0:
             return u
-        if len(layer_index) == 1:
+        elif len(layer_index) == 1:
             # print("u1")
             return u
         elif len(layer_index) == 2:
@@ -189,8 +189,9 @@ def inverse_parameter_svd(u, v, layer_index, sigma=None, sig_ind=None):
             # print("u4")
             for i in range(len(u)):
                 layers_j = []
-                # print("u shape: ", u.shape, " v shape: ", v.shape)
+
                 for j in range(len(u[i])):
+                    print("u shape: ", u.shape, " sigma shape: ", sigma.shape, "v shape: ", v.shape, i, j)
                     layers_j.append(np.matmul(u[i][j] * sigma[i][j], v[i][j]))
                 layers_l.append(layers_j)
             return np.array(layers_l)

@@ -208,7 +208,6 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
 
         if not _has_torch:
             raise ImportError("Framework 'torch' not found")
-
         local_model = copy.deepcopy(local_model).to(device)
         if type(global_model) == torch.nn.Module:
             global_model = copy.deepcopy(global_model).to(device)
