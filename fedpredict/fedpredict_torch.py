@@ -5,7 +5,7 @@ from .utils.compression_methods.sparsification import sparse_crs_top_k, to_dense
 from .utils.compression_methods.fedkd import fedkd_compression
 import os
 
-from fedpredict.fedpredict_core import CKA, fedpredict_core, fedpredict_dynamic_core, fedpredict_core_compredict, fedpredict_core_layer_selection
+from fedpredict.fedpredict_core import fedpredict_dynamic_core
 
 import torch
 
@@ -123,8 +123,8 @@ def fedpredict_client_weight_predictions_torch(output: torch.Tensor, t: int, cur
         return output
 
     except Exception as e:
-        print("FedPredict client weight prediction")
-        print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
+        logger.critical("Method: fedpredict_client_weight_predictions_torch")
+        logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 def fedpredict_client_torch(local_model: torch.nn.Module,
                             global_model: Union[torch.nn.Module, List[NDArrays]],
@@ -335,42 +335,6 @@ def decompress_global_parameters(compressed_global_model_parameters: List[NDArra
 
     except Exception as e:
         logger.critical("Method: decompress_global_parameters")
-        logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
-
-
-def fedpredict_combine_models(global_parameters, model, t, T, nt, M, knowledge_distillation, fc, il):
-    try:
-
-        local_model_weights, global_model_weight = fedpredict_core(t, T, nt, fc, il)
-        # global_model_weight = 1
-        # local_model_weights = 0
-        count = 0
-        if knowledge_distillation:
-            for old_param, new_param in zip(model.student.parameters(), global_parameters):
-                if count in M:
-                    if new_param.shape == old_param.shape:
-                        old_param.data = (
-                                global_model_weight * new_param.data.clone() + local_model_weights * old_param.data.clone())
-                    else:
-                        raise ValueError("Not combined, CNN student: ", new_param.shape, " CNN 3 proto: ", old_param.shape)
-                count += 1
-        else:
-            for new_param, old_param in zip(global_parameters.parameters(), model.parameters()):
-                # if count in M:
-                if new_param.shape == old_param.shape and count in M:
-                    old_param.data = (
-                            global_model_weight * new_param.data.clone() + local_model_weights * old_param.data.clone())
-                else:
-                    # print("Not combined, CNN student: ", new_param.shape, " CNN 3 proto: ", old_param.shape)
-                    pass
-                count += 1
-
-        # print("count: ", count)
-
-        return model
-
-    except Exception as e:
-        logger.critical("method: fedpredict_combine_models")
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 

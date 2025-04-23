@@ -214,14 +214,10 @@ def layer_compression_range(model_shape):
         logger.critical("Method: layer compression range")
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
-
-def dls(lt, parameters,
-        server_round, nt, num_rounds, df):
+def dls(lt, parameters, server_round, nt, num_rounds, df):
     try:
         M = [i for i in range(len(parameters))]
         n_layers = len(parameters) / 2
-        print("quantidade original ", M)
-        # return parameters, M
 
         size_list = []
         for i in range(len(parameters)):
@@ -242,7 +238,6 @@ def dls(lt, parameters,
         for i in range(len(parameters)):
             tamanho = parameters[i].nbytes
             size_list.append(tamanho)
-        print("novo ", M)
         return parameters, M
 
     except Exception as e:
@@ -276,46 +271,6 @@ def per(first_round, parameters):
 
     except Exception as e:
         logger.critical("Method: per")
-        logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
-
-
-def fedpredict_core(t, T, nt, fc, il):
-    try:
-
-        # # 99 bom com alpha 1.0 e 0.1
-        # if fc > 0.94:
-        # # if fc > 0.94 and imbalance_level < 0.4:
-        #     global_model_weight = 1
-        # else:
-        #     global_model_weight = 0
-        #
-        # global_model_weight = 1
-
-        # pior do que 99 com alpha 1.0 e 0.1
-        # global_model_weight = 0
-
-        if nt == 0:
-            global_model_weight = 0
-        elif nt == t or (fc == 1):
-            global_model_weight = 1
-        elif fc is not None and il is not None and (fc > 0.94 and il < 0.4):
-            global_model_weight = 1
-        else:
-            update_level = 1 / nt
-            evolution_level = t / T
-            eq1 = (- evolution_level-update_level)
-            eq2 = round(np.exp(eq1), 6)
-            global_model_weight = eq2
-
-        local_model_weights = 1 - global_model_weight
-
-        # print("rodada: ", t, " rounds sem fit: ", nt, "\npeso global: ", global_model_weight, " peso local: ",
-        #       local_model_weights)
-
-        return local_model_weights, global_model_weight
-
-    except Exception as e:
-        logger.critical("Method: fedpredict core")
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
@@ -359,7 +314,6 @@ def fedpredict_core_layer_selection(t, T, nt, n_layers, df):
         if nt == 0:
             shared_layers = 0
         else:
-            logger.info(f"similaridade layer selection: {df}")
             update_level = 1 / nt
             evolution_level = t / T
             eq1 = (-update_level - evolution_level) * (df)  # v8 ótimo
@@ -393,137 +347,117 @@ def fedpredict_core_compredict(t, T, nt, layer, compression_range):
 
     except Exception as e:
         logger.critical("Method: fedpredict_core_server_compredict")
-        print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
+        logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
+def layerwise_similarity(global_parameters, clients_parameters, clients_ids,
+                         similarity_per_layer_list):
+    try:
+        num_layers = len(global_parameters)
+        num_clients = len(clients_parameters)
+        logger.info(f"global: {num_layers}")
+        similarity_per_layer = {i: {} for i in clients_ids}
+        # interest_layers = [0, 1, int(num_layers/2)-2, int(num_layers/2)-1, num_layers-2, num_layers-1]
+        interest_layers = [0, num_layers - 2]
+        difference_per_layer = {i: {j: {'min': [], 'max': []} for j in range(num_layers)} for i in clients_ids}
+        difference_per_layer_vector = {j: [] for j in range(num_layers)}
+        mean_similarity_per_layer = {i: {'mean': 0, 'ci': 0} for i in range(num_layers)}
+        mean_difference_per_layer = {i: {'min': 0, 'max': 0} for i in range(num_layers)}
 
-# def set_parameters_to_model(parameters, model_name):
-#     # print("tamanho: ", self.input_shape, " dispositivo: ", self.device)
+        for client_id in range(num_clients):
 
-def fedpredict_similarity_per_round_rate(similarities, num_layers, current_round, round_window):
-    similarities_list = {i: [] for i in range(num_layers)}
-    similarity_rate = {i: 0 for i in range(num_layers)}
-    initial_round = 1
+            client = clients_parameters[client_id]
+            client_id = clients_ids[client_id]
 
-    for round in range(initial_round, current_round):
+            for layer_index in range(num_layers):
+                client_layer = client[layer_index]
+                global_layer = global_parameters[layer_index]
+                if np.ndim(global_layer) == 1:
+                    global_layer = np.reshape(global_layer, (len(global_layer), 1))
+                if np.ndim(client_layer) == 1:
+                    client_layer = np.reshape(client_layer, (len(client_layer), 1))
+                # CNN
+                if np.ndim(global_layer) == 4:
+                    client_similarity = []
+                    client_difference = {'min': [], 'max': []}
+                    for k in range(len(global_layer)):
+                        global_layer_k = global_layer[k][0]
+                        client_layer_k = client_layer[k][0]
 
-        for layer in range(num_layers):
-            similarities_list[round].append(similarities[round])
+                        cka = CKA()
+                        if layer_index not in interest_layers:
+                            similarity = 0
+                            difference = np.array([0])
+                        else:
+                            similarity = cka.linear_CKA(global_layer_k, client_layer_k)
+                            difference = global_layer_k - client_layer_k
+                            if np.isnan(similarity):
+                                if np.sum(global_layer_k) == 0 or np.sum(client_layer_k) == 0:
+                                    similarity = 1
 
-    for layer in range(num_layers):
-        similarity_rate[layer] = (similarities_list[current_round] - similarities_list[initial_round]) / round_window
+                        client_similarity.append(similarity)
+                        client_difference['min'].append(abs(difference.min()))
+                        client_difference['max'].append(abs(difference.max()))
+                        difference_per_layer_vector[layer_index] += np.absolute(difference).flatten().tolist()
 
+                    if layer_index not in similarity_per_layer[client_id]:
+                        similarity_per_layer[client_id][layer_index] = []
+                        difference_per_layer[client_id][layer_index]['min'] = []
+                        difference_per_layer[client_id][layer_index]['max'] = []
 
-def fedpredict_layerwise_similarity(global_parameter, clients_parameters, clients_ids,
-                                    similarity_per_layer_list):
-    num_layers = len(global_parameter)
-    num_clients = len(clients_parameters)
-    logger.info(f"global: {num_layers}")
-    similarity_per_layer = {i: {} for i in clients_ids}
-    # interest_layers = [0, 1, int(num_layers/2)-2, int(num_layers/2)-1, num_layers-2, num_layers-1]
-    interest_layers = [0, num_layers - 2]
-    difference_per_layer = {i: {j: {'min': [], 'max': []} for j in range(num_layers)} for i in clients_ids}
-    difference_per_layer_vector = {j: [] for j in range(num_layers)}
-    mean_similarity_per_layer = {i: {'mean': 0, 'ci': 0} for i in range(num_layers)}
-    mean_difference_per_layer = {i: {'min': 0, 'max': 0} for i in range(num_layers)}
+                    similarity_per_layer[client_id][layer_index].append(np.mean(client_similarity))
+                    difference_per_layer[client_id][layer_index]['min'].append(abs(np.mean(client_difference['min'])))
+                    difference_per_layer[client_id][layer_index]['max'].append(abs(np.mean(client_difference['max'])))
+                else:
 
-    for client_id in range(num_clients):
-
-        client = clients_parameters[client_id]
-        client_id = clients_ids[client_id]
-        logger.info(f"cliente antes: {len(client)}")
-
-        for layer_index in range(num_layers):
-            client_layer = client[layer_index]
-            global_layer = global_parameter[layer_index]
-            if np.ndim(global_layer) == 1:
-                global_layer = np.reshape(global_layer, (len(global_layer), 1))
-            if np.ndim(client_layer) == 1:
-                client_layer = np.reshape(client_layer, (len(client_layer), 1))
-            # CNN
-            if np.ndim(global_layer) == 4:
-                client_similarity = []
-                client_difference = {'min': [], 'max': []}
-                for k in range(len(global_layer)):
-                    global_layer_k = global_layer[k][0]
-                    # print("do cliente: ", client_layer.shape, " global: ", global_layer.shape)
-                    client_layer_k = client_layer[k][0]
-
-                    # if gradient:
-                    #     client_layer_k = global_layer_k - client_layer_k
-                    cka = CKA()
                     if layer_index not in interest_layers:
                         similarity = 0
                         difference = np.array([0])
                     else:
-                        similarity = cka.linear_CKA(global_layer_k, client_layer_k)
-                        difference = global_layer_k - client_layer_k
-                        if np.isnan(similarity):
-                            if np.sum(global_layer_k) == 0 or np.sum(client_layer_k) == 0:
-                                similarity = 1
+                        cka = CKA()
+                        similarity = cka.linear_CKA(global_layer, client_layer)
+                        difference = global_layer - client_layer
 
-                    client_similarity.append(similarity)
+                    similarity_per_layer[client_id][layer_index] = similarity
+
+                    client_difference = {'min': [], 'max': []}
                     client_difference['min'].append(abs(difference.min()))
                     client_difference['max'].append(abs(difference.max()))
                     difference_per_layer_vector[layer_index] += np.absolute(difference).flatten().tolist()
+                    if layer_index not in similarity_per_layer[client_id]:
+                        similarity_per_layer[client_id][layer_index] = []
+                        difference_per_layer[client_id][layer_index]['min'] = []
+                        difference_per_layer[client_id][layer_index]['max'] = []
+                    difference_per_layer[client_id][layer_index]['min'].append(abs(np.mean(client_difference['min'])))
+                    difference_per_layer[client_id][layer_index]['max'].append(abs(np.mean(client_difference['max'])))
 
-                if layer_index not in similarity_per_layer[client_id]:
-                    similarity_per_layer[client_id][layer_index] = []
-                    difference_per_layer[client_id][layer_index]['min'] = []
-                    difference_per_layer[client_id][layer_index]['max'] = []
-                # if layer_index == 0:
-                #     print("do cliente: ", client_similarity, len(client_similarity))
-                similarity_per_layer[client_id][layer_index].append(np.mean(client_similarity))
-                difference_per_layer[client_id][layer_index]['min'].append(abs(np.mean(client_difference['min'])))
-                difference_per_layer[client_id][layer_index]['max'].append(abs(np.mean(client_difference['max'])))
-            else:
+        layers_mean_similarity = []
+        for layer_index in interest_layers:
+            similarities = []
+            min_difference = []
+            max_difference = []
+            for client_id in clients_ids:
+                similarities.append(similarity_per_layer[client_id][layer_index])
+                min_difference += difference_per_layer[client_id][layer_index]['min']
+                max_difference += difference_per_layer[client_id][layer_index]['max']
 
-                if layer_index not in interest_layers:
-                    similarity = 0
-                    difference = np.array([0])
-                else:
-                    cka = CKA()
-                    similarity = cka.linear_CKA(global_layer, client_layer)
-                    difference = global_layer - client_layer
+            mean = np.mean(similarities)
+            similarity_per_layer_list[layer_index].append(mean)
+            layers_mean_similarity.append(mean)
+            mean_similarity_per_layer[layer_index]['mean'] = mean
+            # mean_similarity_per_layer[layer_index]['ci'] = st.norm.interval(alpha=0.95, loc=np.mean(similarities), scale=st.sem(similarities))[1] - np.mean(similarities)
+            # mean_difference_per_layer[layer_index]['min'] = np.mean(min_difference)
+            # mean_difference_per_layer[layer_index]['max'] = np.mean(max_difference)
+            logger.info("""similaridade (camada {}): {}""".format(layer_index, mean_similarity_per_layer[layer_index]))
+        for layer in difference_per_layer_vector:
+            if np.sum(difference_per_layer_vector[layer]) == 0:
+                continue
+            # df = pd.DataFrame({'Difference': difference_per_layer_vector[layer], 'x': [i for i in range(len(difference_per_layer_vectore[layer]))]})
+            # box_plot(df=df, base_dir='', file_name="""boxplot_difference_layer_{}_round_{}_dataset_{}_alpha_{}""".format(str(layer), str(server_round), dataset, alpha), x_column=None, y_column='Difference', title='Difference between global and local parameters', y_lim=True, y_max=0.065)
 
-                similarity_per_layer[client_id][layer_index] = similarity
-
-                client_difference = {'min': [], 'max': []}
-                client_difference['min'].append(abs(difference.min()))
-                client_difference['max'].append(abs(difference.max()))
-                difference_per_layer_vector[layer_index] += np.absolute(difference).flatten().tolist()
-                if layer_index not in similarity_per_layer[client_id]:
-                    similarity_per_layer[client_id][layer_index] = []
-                    difference_per_layer[client_id][layer_index]['min'] = []
-                    difference_per_layer[client_id][layer_index]['max'] = []
-                difference_per_layer[client_id][layer_index]['min'].append(abs(np.mean(client_difference['min'])))
-                difference_per_layer[client_id][layer_index]['max'].append(abs(np.mean(client_difference['max'])))
-
-    layers_mean_similarity = []
-    for layer_index in interest_layers:
-        similarities = []
-        min_difference = []
-        max_difference = []
-        for client_id in clients_ids:
-            similarities.append(similarity_per_layer[client_id][layer_index])
-            min_difference += difference_per_layer[client_id][layer_index]['min']
-            max_difference += difference_per_layer[client_id][layer_index]['max']
-
-        mean = np.mean(similarities)
-        similarity_per_layer_list[layer_index].append(mean)
-        layers_mean_similarity.append(mean)
-        mean_similarity_per_layer[layer_index]['mean'] = mean
-        # mean_similarity_per_layer[layer_index]['ci'] = st.norm.interval(alpha=0.95, loc=np.mean(similarities), scale=st.sem(similarities))[1] - np.mean(similarities)
-        # mean_difference_per_layer[layer_index]['min'] = np.mean(min_difference)
-        # mean_difference_per_layer[layer_index]['max'] = np.mean(max_difference)
-        logger.info("""similaridade (camada {}): {}""".format(layer_index, mean_similarity_per_layer[layer_index]))
-    for layer in difference_per_layer_vector:
-        if np.sum(difference_per_layer_vector[layer]) == 0:
-            continue
-        # df = pd.DataFrame({'Difference': difference_per_layer_vector[layer], 'x': [i for i in range(len(difference_per_layer_vectore[layer]))]})
-        # box_plot(df=df, base_dir='', file_name="""boxplot_difference_layer_{}_round_{}_dataset_{}_alpha_{}""".format(str(layer), str(server_round), dataset, alpha), x_column=None, y_column='Difference', title='Difference between global and local parameters', y_lim=True, y_max=0.065)
-
-    return similarity_per_layer, mean_similarity_per_layer, np.mean(layers_mean_similarity), similarity_per_layer_list
-
+        return similarity_per_layer, mean_similarity_per_layer, np.mean(layers_mean_similarity), similarity_per_layer_list
+    except Exception as e:
+        logger.critical("Method: fedpredict_layerwise_similarity")
+        logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 def decimals_per_layer(mean_difference_per_layer):
     window = 1
@@ -596,7 +530,6 @@ def fedpredict_server(global_model_parameters: np.array, client_evaluate_list: L
         global_model_parameters = [i.detach().cpu().numpy() for i in global_model_parameters.parameters()]
         global_model_original_shape = [i.shape for i in global_model_parameters]
         client_evaluate_list_fedpredict = []
-        accuracy = 0
         size_of_parameters = []
 
         # Reuse previously compressed parameters
