@@ -72,13 +72,9 @@ stdout_handler.setFormatter(CustomFormatter(fmt))
 
 # Create file handler for logging to a file (logs all five levels)
 today = datetime.date.today()
-file_handler = logging.FileHandler('my_app_{}.log'.format(today.strftime('%Y_%m_%d')))
-file_handler.setLevel(logging.DEBUG)
-file_handler.setFormatter(logging.Formatter(fmt))
 
 # Add both handlers to the logger
 logger.addHandler(stdout_handler)
-logger.addHandler(file_handler)
 
 
 class CKA(object):
@@ -86,43 +82,67 @@ class CKA(object):
         pass
 
     def centering(self, K):
-        n = K.shape[0]
-        unit = np.ones([n, n])
-        I = np.eye(n)
-        H = I - unit / n
-        return np.dot(np.dot(H, K), H)
+        try:
+            n = K.shape[0]
+            unit = np.ones([n, n])
+            I = np.eye(n)
+            H = I - unit / n
+            return np.dot(np.dot(H, K), H)
+        except Exception as e:
+            logger.critical("Method: centering")
+            logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
     def rbf(self, X, sigma=None):
-        GX = np.dot(X, X.T)
-        KX = np.diag(GX) - GX + (np.diag(GX) - GX).T
-        if sigma is None:
-            mdist = np.median(KX[KX != 0])
-            sigma = math.sqrt(mdist)
-        KX *= - 0.5 / (sigma * sigma)
-        KX = np.exp(KX)
-        return KX
+        try:
+            GX = np.dot(X, X.T)
+            KX = np.diag(GX) - GX + (np.diag(GX) - GX).T
+            if sigma is None:
+                mdist = np.median(KX[KX != 0])
+                sigma = math.sqrt(mdist)
+            KX *= - 0.5 / (sigma * sigma)
+            KX = np.exp(KX)
+            return KX
+        except Exception as e:
+            logger.critical("Method: rbf")
+            logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
     def kernel_HSIC(self, X, Y, sigma):
-        return np.sum(self.centering(self.rbf(X, sigma)) * self.centering(self.rbf(Y, sigma)))
+        try:
+            return np.sum(self.centering(self.rbf(X, sigma)) * self.centering(self.rbf(Y, sigma)))
+        except Exception as e:
+            logger.critical("Method: kernel_HSIC")
+            logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
     def linear_HSIC(self, X, Y):
-        L_X = X @ X.T
-        L_Y = Y @ Y.T
-        return np.sum(self.centering(L_X) * self.centering(L_Y))
+        try:
+            L_X = X @ X.T
+            L_Y = Y @ Y.T
+            return np.sum(self.centering(L_X) * self.centering(L_Y))
+        except Exception as e:
+            logger.critical("Method: linear_HSIC")
+            logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
     def linear_CKA(self, X, Y):
-        hsic = self.linear_HSIC(X, Y)
-        var1 = np.sqrt(self.linear_HSIC(X, X))
-        var2 = np.sqrt(self.linear_HSIC(Y, Y))
+        try:
+            hsic = self.linear_HSIC(X, Y)
+            var1 = np.sqrt(self.linear_HSIC(X, X))
+            var2 = np.sqrt(self.linear_HSIC(Y, Y))
 
-        return hsic / (var1 * var2)
+            return hsic / (var1 * var2)
+        except Exception as e:
+            logger.critical("Method: linear_CKA")
+            logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
     def kernel_CKA(self, X, Y, sigma=None):
-        hsic = self.kernel_HSIC(X, Y, sigma)
-        var1 = np.sqrt(self.kernel_HSIC(X, X, sigma))
-        var2 = np.sqrt(self.kernel_HSIC(Y, Y, sigma))
+        try:
+            hsic = self.kernel_HSIC(X, Y, sigma)
+            var1 = np.sqrt(self.kernel_HSIC(X, X, sigma))
+            var2 = np.sqrt(self.kernel_HSIC(Y, Y, sigma))
 
-        return hsic / (var1 * var2)
+            return hsic / (var1 * var2)
+        except Exception as e:
+            logger.critical("Method: kernel_CKA")
+            logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 # ===========================================================================================
 
@@ -164,12 +184,7 @@ def compredict(round_of_last_fit, layers_comppression_range, num_rounds, server_
 
                 n_components_list.append(n_components)
 
-            logger.info(f"Vetor de componentes: {n_components_list}")
-
             parameter = parameter_svd_write(parameter, n_components_list)
-
-            # print("Client: ", client_id, " round: ", server_round, " nt: ", nt, " norm: ", np.mean(gradient_norm), " camadas: ", M, " todos: ", gradient_norm)
-            logger.info(f"modelo compredict: {[i.shape for i in parameter]}")
 
         else:
             new_parameter = []
@@ -624,7 +639,7 @@ def fedpredict_server(global_model_parameters: np.array, client_evaluate_list: L
                 continue
 
             elif compression is None:
-                logger.info(f"compression none")
+                logger.info(f"compression None")
                 config['M'] = [i for i in range(len(global_model_parameters))]
                 config['decompress'] = False
                 config['layers_fraction'] = 1
@@ -667,7 +682,7 @@ def fedpredict_server(global_model_parameters: np.array, client_evaluate_list: L
                 previously_reduced_parameters[nt] = [copy.deepcopy(parameters_to_send), M, layers_fraction, decompress]
 
             else:
-                logger.info(f"Reused parameters for nt == {nt}")
+                # logger.info(f"Reused parameters for nt == {nt}")
                 parameters_to_send, M, layers_fraction, decompress = previously_reduced_parameters[nt]
 
             parameters_to_send = [np.array(i) for i in parameters_to_send]

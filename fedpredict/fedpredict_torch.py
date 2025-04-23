@@ -80,13 +80,9 @@ stdout_handler.setFormatter(CustomFormatter(fmt))
 
 # Create file handler for logging to a file (logs all five levels)
 today = datetime.date.today()
-file_handler = logging.FileHandler('my_app_{}.log'.format(today.strftime('%Y_%m_%d')))
-file_handler.setLevel(logging.DEBUG)
-file_handler.setFormatter(logging.Formatter(fmt))
 
 # Add both handlers to the logger
 logger.addHandler(stdout_handler)
-logger.addHandler(file_handler)
 
 
 # ===========================================================================================

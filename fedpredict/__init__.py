@@ -22,12 +22,12 @@ else:
     _has_tf = True
 
 from fedpredict.fedpredict_torch import fedpredict_client_torch, fedpredict_client_weight_predictions_torch
-from fedpredict.fedpredict_core import fedpredict_server
+from fedpredict.fedpredict_core import fedpredict_server, layerwise_similarity
 from fedpredict.utils.utils import fedpredict_layerwise_similarity
 
 __all__ = [
     "fedpredict_client_torch",
     "fedpredict_server",
     "fedpredict_client_weight_predictions_torch",
-    "fedpredict_layerwise_similarity"
+    "layerwise_similarity"
 ]
