@@ -314,7 +314,7 @@ def decompress_global_parameters(compressed_global_model_parameters: List[NDArra
                 is_layer_selection = True
                 break
 
-        print("is_layer_selection", is_layer_selection)
+        # logger.debug("is_layer_selection", is_layer_selection)
 
         if len(compressed_global_model_parameters) > 0 and not is_layer_selection:
             decompressed_gradients = inverse_parameter_svd_reading(compressed_global_model_parameters, global_model_original_shape)
