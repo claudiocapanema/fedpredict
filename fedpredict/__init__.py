@@ -29,5 +29,6 @@ __all__ = [
     "fedpredict_client_torch",
     "fedpredict_server",
     "fedpredict_client_weight_predictions_torch",
-    "layerwise_similarity"
+    "layerwise_similarity",
+    "fedpredict_layerwise_similarity"
 ]

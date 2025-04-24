@@ -380,11 +380,11 @@ def layerwise_similarity(global_parameters, clients_parameters, clients_ids,
 
         for client_id in range(num_clients):
 
-            client = clients_parameters[client_id]
+            client_parameters = clients_parameters[client_id]
             client_id = clients_ids[client_id]
 
             for layer_index in range(num_layers):
-                client_layer = client[layer_index]
+                client_layer = client_parameters[layer_index]
                 global_layer = global_parameters[layer_index]
                 if np.ndim(global_layer) == 1:
                     global_layer = np.reshape(global_layer, (len(global_layer), 1))

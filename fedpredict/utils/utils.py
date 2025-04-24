@@ -146,7 +146,7 @@ class CKA(object):
 
 
 
-def fedpredict_layerwise_similarity(global_parameter, clients_parameters, clients_ids, server_round, dataset, alpha, similarity_per_layer_list):
+def fedpredict_layerwise_similarity(global_parameter, clients_parameters, clients_ids, similarity_per_layer_list):
 
     num_layers = len(global_parameter)
     num_clients = len(clients_parameters)
