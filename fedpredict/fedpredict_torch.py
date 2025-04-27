@@ -205,7 +205,7 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
         if not _has_torch:
             raise ImportError("Framework 'torch' not found")
         local_model = copy.deepcopy(local_model).to(device)
-        if type(global_model) == torch.nn.Module:
+        if isinstance(global_model, torch.nn.Module):
             global_model = copy.deepcopy(global_model).to(device)
         elif type(global_model) == list and type(global_model_original_shape) == list:
             assert len(global_model_original_shape) > 0, "original_global_model_shape must not be empty"
