@@ -1,5 +1,4 @@
 import numpy as np
-# from bitstring import BitArray
 import sys
 
 
