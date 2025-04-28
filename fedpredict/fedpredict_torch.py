@@ -214,13 +214,13 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
             raise TypeError(f"n must be an int but got {type(nt)}")
         if type(s) is not float and s != 1:
             raise TypeError(f"s must be a float but got {type(s)}")
-        if type(fc) is not dict:
+        if type(fc) not in [dict, type(None)]:
             raise TypeError(f"fc must be a dict but got {type(fc)}")
-        if type(il) is not dict:
+        if type(il) not in [dict, type(None)]:
             raise TypeError(f"il must be a dict but got {type(il)}")
-        if type(dh) is not dict:
+        if type(dh) not in [dict, type(None)]:
             raise TypeError(f"dh must be a dict but got {type(dh)}")
-        if type(ps) is not dict:
+        if type(ps) not in [dict, type(None)]:
             raise TypeError(f"ps must be a dict but got {type(ps)}")
         if type(logs) is not bool:
             raise TypeError(f"logs must be a bool but got {type(logs)}")
