@@ -202,28 +202,28 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
 
     try:
 
-        if isinstance(local_model, torch.nn.Module):
-            raise TypeError("local_model must be of type torch.nn.Module")
-        if isinstance(global_model, torch.nn.Module) or isinstance(global_model, List):
-            raise TypeError("global_model must be of type torch.nn.Module" or List)
+        if type(local_model).__base__ != torch.nn.Module:
+            raise TypeError(f"local_model must be of type torch.nn.Module but got {type(local_model).__base__}")
+        if type(local_model).__base__ != torch.nn.Module or type(global_model) == List:
+            raise TypeError(f"global_model must be of type torch.nn.Module or List but got {type(global_model)}")
         if type(t) is not int:
-            raise TypeError("t must be an int")
+            raise TypeError(f"t must be an int but got {type(t)}")
         if type(T) is not int:
-            raise TypeError("T must be an int")
+            raise TypeError(f"T must be an int but got {type(T)}")
         if type(nt) is not int:
-            raise TypeError("n must be an int")
-        if type(s) is not float:
-            raise TypeError("s must be a float")
+            raise TypeError(f"n must be an int but got {type(nt)}")
+        if type(s) is not float and s != 1:
+            raise TypeError(f"s must be a float but got {type(s)}")
         if type(fc) is not dict:
-            raise TypeError("fc must be a dict")
+            raise TypeError(f"fc must be a dict but got {type(fc)}")
         if type(il) is not dict:
-            raise TypeError("il must be a dict")
+            raise TypeError(f"il must be a dict but got {type(il)}")
         if type(dh) is not dict:
-            raise TypeError("dh must be a dict")
+            raise TypeError(f"dh must be a dict but got {type(dh)}")
         if type(ps) is not dict:
-            raise TypeError("ps must be a dict")
+            raise TypeError(f"ps must be a dict but got {type(ps)}")
         if type(logs) is not bool:
-            raise TypeError("logs must be a bool")
+            raise TypeError(f"logs must be a bool but got {type(logs)}")
 
         if not _has_torch:
             raise ImportError("Framework 'torch' not found")
