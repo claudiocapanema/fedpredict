@@ -212,6 +212,29 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
             global_model = decompress_global_parameters(global_model, global_model_original_shape, local_model).to(device)
             # logger.info(f"descomprimido {[i.shape for i in global_model.parameters()]} shape {global_model_original_shape} o")
 
+        if isinstance(local_model, torch.nn.Module):
+            raise TypeError("local_model must be of type torch.nn.Module")
+        if isinstance(global_model, torch.nn.Module) or isinstance(global_model, List):
+            raise TypeError("global_model must be of type torch.nn.Module" or List)
+        if type(t) is not int:
+            raise TypeError("t must be an int")
+        if type(T) is not int:
+            raise TypeError("T must be an int")
+        if type(nt) is not int:
+            raise TypeError("n must be an int")
+        if type(s) is not float:
+            raise TypeError("s must be a float")
+        if type(fc) is not dict:
+            raise TypeError("fc must be a dict")
+        if type(il) is not dict:
+            raise TypeError("il must be a dict")
+        if type(dh) is not dict:
+            raise TypeError("dh must be a dict")
+        if type(ps) is not dict:
+            raise TypeError("ps must be a dict")
+        if type(logs) is not bool:
+            raise TypeError("logs must be a bool")
+
         assert t >= 0, f"t must be greater or equal than 0, but you passed {t}"
         assert (T >= t and T >= 0), f"T must be greater than t, but you passed t: {t} and T: {T}"
         assert nt >= 0, f"nt must be greater than 0, but you passed {nt}"
