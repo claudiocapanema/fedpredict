@@ -202,16 +202,6 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
 
     try:
 
-        if not _has_torch:
-            raise ImportError("Framework 'torch' not found")
-        local_model = copy.deepcopy(local_model).to(device)
-        if isinstance(global_model, torch.nn.Module):
-            global_model = copy.deepcopy(global_model).to(device)
-        elif type(global_model) == list and type(global_model_original_shape) == list:
-            assert len(global_model_original_shape) > 0, "original_global_model_shape must not be empty"
-            global_model = decompress_global_parameters(global_model, global_model_original_shape, local_model).to(device)
-            # logger.info(f"descomprimido {[i.shape for i in global_model.parameters()]} shape {global_model_original_shape} o")
-
         if isinstance(local_model, torch.nn.Module):
             raise TypeError("local_model must be of type torch.nn.Module")
         if isinstance(global_model, torch.nn.Module) or isinstance(global_model, List):
@@ -234,6 +224,17 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
             raise TypeError("ps must be a dict")
         if type(logs) is not bool:
             raise TypeError("logs must be a bool")
+
+        if not _has_torch:
+            raise ImportError("Framework 'torch' not found")
+        local_model = copy.deepcopy(local_model).to(device)
+        if isinstance(global_model, torch.nn.Module):
+            global_model = copy.deepcopy(global_model).to(device)
+        elif type(global_model) == list and type(global_model_original_shape) == list:
+            assert len(global_model_original_shape) > 0, "original_global_model_shape must not be empty"
+            global_model = decompress_global_parameters(global_model, global_model_original_shape, local_model).to(device)
+            # logger.info(f"descomprimido {[i.shape for i in global_model.parameters()]} shape {global_model_original_shape} o")
+
 
         assert t >= 0, f"t must be greater or equal than 0, but you passed {t}"
         assert (T >= t and T >= 0), f"T must be greater than t, but you passed t: {t} and T: {T}"
