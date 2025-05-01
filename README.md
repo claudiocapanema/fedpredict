@@ -24,7 +24,7 @@ It is better working with the **prediction stage**. See the comparison below!
 
 ![](docs/images/contribu.jpeg)
 
-## How it works?
+## How does it work?
 
 FedPredict intelligently combines global and local model parameters, assigning dynamic weights to each based on several factors. 
 These factors include the evolution level (el) of the global model, the update level (ul) of the local model, and the similarity (s) between previously seen data (i.e., data used in prior training) and newly acquired data.
