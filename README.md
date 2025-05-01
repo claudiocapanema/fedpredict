@@ -11,7 +11,7 @@ This project has been developed through a collaboration between the **WISEMAP La
 
 The list of projects currently using FedPredict includes (continuously updated):
 
-- [FL-H.IAAC_docker](https://github.com/claudiocapanema/FL-HIAAC_docker): it has the code of the experiments of FedPredict papers in **IEEE DCOSS-IoT [2023](https://ieeexplore.ieee.org/document/10257293) and [2024](https://ieeexplore.ieee.org/abstract/document/10621488) (i.e., FedPredict and FedPredict-Dynamic**), and IEEE Transactions on Emerging Topics [2025](https://ieeexplore.ieee.org/abstract/document/10713874) (extended FedPredict).
+- [FL-H.IAAC_docker](https://github.com/claudiocapanema/FL-HIAAC_docker): it has the code of the experiments of FedPredict papers in **IEEE DCOSS-IoT [2023](https://ieeexplore.ieee.org/document/10257293) and [2024](https://ieeexplore.ieee.org/abstract/document/10621488)** (i.e., FedPredict and FedPredict-Dynamic), and **IEEE Transactions on Emerging Topics** [2025](https://ieeexplore.ieee.org/abstract/document/10713874) (extended FedPredict).
 - PFLib (will be available soon).
 
 ## Documentation
