@@ -2,8 +2,10 @@ site_name: FedPredict
 site_url: https://www.fedpredict.com/
 nav:
   - Home: index.md
-  - Quick start: quick_start.md
+  - Examples:
+      - 'Quick start': quick_start.md
+      - 'Flower + FedPredict': flower_fedpredict.md
+  - Projects: projects.md
   - API Reference:
       - 'Pytorch': api_reference_torch.md
-      - 'TensorFlow': api_reference_tf.md
   - About: about.md
