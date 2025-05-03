@@ -128,5 +128,4 @@ If FedPredict has been useful to you, please cite our papers.
   pages={101-108},
   keywords={Training;Accuracy;Federated learning;Geology;Concept drift;Data models;Internet of Things;Concept Drift;Personalized Federated Learning;Federated Learning Plugin;Neural Networks},
   doi={10.1109/DCOSS-IoT61029.2024.00024}}
-
 ```

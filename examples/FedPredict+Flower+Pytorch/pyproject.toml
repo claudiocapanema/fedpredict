@@ -1,0 +1,46 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pytorch_fedpredict_example"
+version = "1.0.0"
+description = "Federated Learning with PyTorch, Flower, and FedPredict"
+license = "Apache-2.0"
+dependencies = [
+    "flwr[simulation]>=1.18.0",
+    "flwr-datasets[vision]>=0.5.0",
+    "torch==2.5.1",
+    "torchvision==0.20.1",
+    "fedpredict>=0.0.22"
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]
+
+[tool.flwr.app]
+publisher = "flwrlabs"
+
+[tool.flwr.app.components]
+serverapp = "pytorch_fedpredict_example.server_app:app"
+clientapp = "pytorch_fedpredict_example.client_app:app"
+
+[tool.flwr.app.config]
+num-server-rounds = 100
+fraction-evaluate = 1
+local-epochs = 1
+learning-rate = 0.1
+batch-size = 32
+alpha = 1.0 # FedPredict is a personalization plugin evaluated with alpha=[0.1, 1.0]
+strategy = "FedAvg+FP" # Possible values: {"FedAvg+FP", "FedAvg"} for comparison
+
+[tool.flwr.federations]
+default = "local-simulation"
+
+[tool.flwr.federations.local-simulation]
+options.num-supernodes = 20
+
+[tool.flwr.federations.local-simulation-gpu]
+options.num-supernodes = 20
+options.backend.client-resources.num-cpus = 1 # each ClientApp assumes to use 1 CPU
+options.backend.client-resources.num-gpus = 1 #

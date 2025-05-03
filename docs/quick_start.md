@@ -1,6 +1,6 @@
 # Quick start
 
-## Simple usage
+## Basic usage - FedPredict Client
 
 
 At the client-side, after receiving the global model parameters in the prediction state, apply FedPredict as follows:
@@ -21,7 +21,6 @@ At the client-side, after receiving the global model parameters in the predictio
     # Use the combined model to perform predictions over the input data
     y_hat = combined_model(X_test)
 ```
-
 
 
 
