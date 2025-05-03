@@ -19,3 +19,9 @@ nav:
 #  - API Reference:
 #      - 'Pytorch': api_reference_torch.md
   - About: about.md
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - toc:
+      permalink: true
