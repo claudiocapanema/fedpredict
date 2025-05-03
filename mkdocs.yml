@@ -1,11 +1,21 @@
+repo_url: https://github.com/claudiocapanema/fedpredict
+repo_name: claudiocapanema/fedpredict
 site_name: FedPredict
 site_url: https://www.fedpredict.com/
+theme:
+  name: material
+  color_mode: auto
+  user_color_mode_toggle: true
+  locale: en
+  icon:
+    repo: fontawesome/brands/github
+
 nav:
   - Home: index.md
-  - Examples:
-      - 'Quick start': quick_start.md
-      - 'Flower + FedPredict': flower_fedpredict.md
+  - Tutorials:
+      - Hello FedPredict: hello_fedpredict.md
+      - Flower + FedPredict: flower_fedpredict.md
   - Projects: projects.md
-  - API Reference:
-      - 'Pytorch': api_reference_torch.md
+#  - API Reference:
+#      - 'Pytorch': api_reference_torch.md
   - About: about.md

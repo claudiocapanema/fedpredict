@@ -22,7 +22,7 @@ Please access the FedPredict [documentation](https://claudiocapanema.github.io/f
 
 It is better working with the **prediction stage**. See the comparison below!
 
-![](docs/images/contribu.jpeg)
+![](images/contribu.jpeg)
 
 ## How does it work?
 
@@ -30,7 +30,7 @@ FedPredict intelligently combines global and local model parameters, assigning d
 These factors include the evolution level (el) of the global model, the update level (ul) of the local model, and the similarity (s) between previously seen data (i.e., data used in prior training) and newly acquired data.
 Using this adaptive combination, the client generates a personalized model, which is then used for prediction on validation or test data.
 
-![](docs/images/fedpredictv5.jpeg)
+![](images/fedpredictv5.jpeg)
 
 ## Benefits
 
