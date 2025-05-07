@@ -2,6 +2,7 @@ repo_url: https://github.com/claudiocapanema/fedpredict
 repo_name: claudiocapanema/fedpredict
 site_name: FedPredict
 site_url: https://www.fedpredict.com/
+site_author: Cláudio G. S. Capanema
 theme:
   name: material
   color_mode: auto
@@ -9,9 +10,19 @@ theme:
   locale: en
   icon:
     repo: fontawesome/brands/github
+  features:
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.path
 
 nav:
-  - Home: index.md
+  - Home:
+      - Welcome to FedPredict: index.md
+      - Why FedPredict?: why_fedpredict.md
+      - Installation: installation.md
   - Tutorials:
       - Hello FedPredict: hello_fedpredict.md
       - Flower + FedPredict: flower_fedpredict.md

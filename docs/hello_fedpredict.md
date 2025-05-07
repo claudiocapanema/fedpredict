@@ -1,6 +1,6 @@
-# Quick start
+# Hello FedPredict
 
-## Basic usage - FedPredict Client
+## Toy example - FedPredict Client
 
 
 At the client-side, after receiving the global model parameters in the prediction state, apply FedPredict as follows:
