@@ -10,13 +10,9 @@
         <meta name="author" content="Cláudio G. S. Capanema">
       
       
-        <link rel="canonical" href="https://www.fedpredict.com/hello_fedpredict/">
+        <link rel="canonical" href="https://www.fedpredict.com/components/">
       
       
-        <link rel="prev" href="../installation/">
-      
-      
-        <link rel="next" href="../flower_fedpredict/">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -24,7 +20,7 @@
     
     
       
-        <title>Hello FedPredict - FedPredict</title>
+        <title>Components - FedPredict</title>
       
     
     
@@ -66,7 +62,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#hello-fedpredict" class="md-skip">
+        <a href="#components" class="md-skip">
           Skip to content
         </a>
       
@@ -102,7 +98,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Hello FedPredict
+              Components
             
           </span>
         </div>
@@ -199,13 +195,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="./" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../hello_fedpredict/" class="md-tabs__link">
           
   
   
@@ -429,31 +423,26 @@
       
   
   
-    
   
   
-  
     
     
     
     
-      
-        
-        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
         
           
-          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
             
   
   
@@ -466,7 +455,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             Tutorials
@@ -477,32 +466,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    Hello FedPredict
-    
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../hello_fedpredict/" class="md-nav__link">
         
   
   
@@ -513,35 +480,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#toy-example-fedpredict-client" class="md-nav__link">
-    <span class="md-ellipsis">
-      Toy example - FedPredict Client
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -638,8 +576,6 @@
   
   
   
-    
-  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -648,9 +584,9 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#toy-example-fedpredict-client" class="md-nav__link">
+  <a href="#components" class="md-nav__link">
     <span class="md-ellipsis">
-      Toy example - FedPredict Client
+      Components
     </span>
   </a>
   
@@ -675,25 +611,28 @@
   
 
 
-<h1 id="hello-fedpredict">Hello FedPredict<a class="headerlink" href="#hello-fedpredict" title="Permanent link">&para;</a></h1>
-<h2 id="toy-example-fedpredict-client">Toy example - FedPredict Client<a class="headerlink" href="#toy-example-fedpredict-client" title="Permanent link">&para;</a></h2>
-<p>At the client-side, after receiving the global model parameters in the prediction state, apply FedPredict as follows:</p>
-<div class="codehilite"><pre><span></span><code>    <span class="kn">from</span><span class="w"> </span><span class="nn">fedpredict</span><span class="w"> </span><span class="kn">import</span> <span class="n">fedpredict_client_torch</span>
+  <h1>Components</h1>
 
-    <span class="n">t</span> <span class="o">=</span> <span class="mi">50</span> <span class="c1"># current round</span>
-    <span class="n">T</span> <span class="o">=</span> <span class="mi">100</span> <span class="c1"># total number of rounds</span>
-    <span class="n">nt</span> <span class="o">=</span> <span class="mi">3</span> <span class="c1"># number of rounds since the last time the current client trained</span>
-    <span class="n">M</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">global_model</span><span class="p">)</span> <span class="c1"># the number of layers shared by the server</span>
-
-    <span class="c1"># apply fedpredict</span>
-    <span class="n">combinel_model</span> <span class="o">=</span> <span class="n">fedpredict_client_torch</span><span class="p">(</span><span class="n">local_model</span><span class="o">=</span><span class="n">local_model</span><span class="p">,</span> 
-                                             <span class="n">global_model</span><span class="o">=</span><span class="n">global_model</span><span class="p">,</span> 
-                                             <span class="n">t</span><span class="o">=</span><span class="n">t</span><span class="p">,</span> 
-                                             <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">,</span> 
-                                             <span class="n">nt</span><span class="o">=</span><span class="n">nt</span><span class="p">)</span>
-    <span class="c1"># Use the combined model to perform predictions over the input data</span>
-    <span class="n">y_hat</span> <span class="o">=</span> <span class="n">combined_model</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
-</code></pre></div>
+<h2 id="components">Components<a class="headerlink" href="#components" title="Permanent link">&para;</a></h2>
+<p>Our solution has two main components: FedPredict client and FedPredict server. Their objectives are described below:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Components</th>
+<th style="text-align: left;">Objective</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">FedPredict Client</td>
+<td style="text-align: left;">Transfer the knowledge from the updated global model to the client's stale local model</td>
+</tr>
+<tr>
+<td style="text-align: left;">FedPredict server (optional)</td>
+<td style="text-align: left;">Compresses the updated global model parameters to further send to the clients. Used together with FedPredict client</td>
+</tr>
+</tbody>
+</table>
 
 
 
