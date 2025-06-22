@@ -370,7 +370,6 @@ def fedpredict_dynamic_combine_models(global_parameters, model, t, T, nt, M, s, 
                     old_param.data = (
                             global_model_weight * new_param.data.clone() + local_model_weights * old_param.data.clone())
                 else:
-                    logger.info(f"t {t} T {T} nt {nt} M {M} s {s}")
                     raise ValueError(f"Layer {count} has different shapes: global model {new_param.shape} and local model {old_param.shape}")
             count += 1
 

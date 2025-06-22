@@ -143,7 +143,7 @@ def inverse_parameter_svd_reading(arrays, model_shape):
     try:
         M = len(model_shape)
         reconstructed_model = []
-        logger.info(f"antes inverse: {model_shape}")
+        # logger.info(f"antes inverse: {model_shape}")
 
         for i in range(M):
             layer_shape = model_shape[i]
@@ -159,8 +159,8 @@ def inverse_parameter_svd_reading(arrays, model_shape):
                 pass
             reconstructed_model.append(parameter_layer)
 
-        logger.info(f"original shape: {model_shape}")
-        logger.info(f"depois inverse: {[i.shape for i in reconstructed_model]}")
+        # logger.info(f"original shape: {model_shape}")
+        # logger.info(f"depois inverse: {[i.shape for i in reconstructed_model]}")
 
         return reconstructed_model
 
