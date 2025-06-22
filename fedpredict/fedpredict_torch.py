@@ -325,7 +325,7 @@ def decompress_global_parameters(compressed_global_model_parameters: List[NDArra
             is_layer_selection = True
         else:
             is_layer_selection = False
-        for i in range(len(compressed_global_model_parameters)):
+        for i in range(min([len(compressed_global_model_parameters), len(global_model_original_shape)])):
             compressed_shape = compressed_global_model_parameters[i].shape
             original_shape = global_model_original_shape[i]
             if compressed_shape != original_shape:

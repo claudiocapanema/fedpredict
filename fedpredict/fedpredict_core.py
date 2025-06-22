@@ -6,6 +6,7 @@ from .utils.compression_methods.parameters_svd import parameter_svd_write, inver
 from .utils.compression_methods.sparsification import sparse_crs_top_k, to_dense, sparse_matrix, get_not_zero_values
 from .utils.compression_methods.fedkd import fedkd_compression
 import os
+import torch
 
 import math
 
@@ -232,13 +233,14 @@ def layer_compression_range(model_shape):
 def dls(lt, parameters, server_round, nt, num_rounds, df):
     try:
         M = [i for i in range(len(parameters))]
+        logger.info(f"Original number of layers {M}")
         n_layers = len(parameters) / 2
 
         size_list = []
         for i in range(len(parameters)):
             tamanho = get_size(parameters[i])
             size_list.append(tamanho)
-        if lt != 0:
+        if lt >= 1:
             # baixo-cima
 
             M = fedpredict_core_layer_selection(t=server_round, T=num_rounds, nt=nt, n_layers=n_layers, df=df)
@@ -259,16 +261,26 @@ def dls(lt, parameters, server_round, nt, num_rounds, df):
         logger.critical("Method: dls")
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
-def per(first_round, parameters):
+def per(lt, parameters):
+    """
+    This method returns all layers parameters except the last two. It is inspired by the FedPer solution.
+    Args:
+        lt:
+        parameters:
+
+    Returns:
+
+    """
     try:
-        M = [i for i in range(len(parameters))]
+        M = len([i for i in range(len(parameters))])
+        logger.info(f"Original number of layers {M}")
         n_layers = len(parameters) / 2
 
         size_list = []
         for i in range(len(parameters)):
             tamanho = get_size(parameters[i])
             size_list.append(tamanho)
-        if first_round != -0:
+        if lt >= 1:
             # baixo-cima
             M = [i for i in range(len(parameters))][:-2]
             new_parameters = []
@@ -514,7 +526,7 @@ def get_size(parameter):
         logger.critical("Method: get_size")
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
-def fedpredict_server(global_model_parameters: np.array, client_evaluate_list: List[Tuple], t: int, T: int, model_shape: List,
+def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Module], client_evaluate_list: List[Tuple], t: int, T: int, model_shape: List,
                       compression: str, df: float = 0, fl_framework=None)-> Union[List[Dict], Tuple[int, Dict]]:
     """
         This function compresses the global model parameters using the specified "compression" technique.
@@ -524,8 +536,6 @@ def fedpredict_server(global_model_parameters: np.array, client_evaluate_list: L
                 List of numpy arrays.
             client_evaluate_list: list[tuple], required
                 List of clients' tuples.
-            fedpredict_clients_metrics: dict, required
-                Dict of clients' metrics.
             t: int, required
             T: int, required
             model_shape: List, required
@@ -542,7 +552,9 @@ def fedpredict_server(global_model_parameters: np.array, client_evaluate_list: L
 
     """
     try:
-        global_model_parameters = [i.detach().cpu().numpy() for i in global_model_parameters.parameters()]
+        assert isinstance(global_model_parameters, torch.nn.Module) or isinstance(global_model_parameters, list), "global model parameters must be of type torch.nn.Module or list"
+        if isinstance(global_model_parameters, torch.nn.Module):
+            global_model_parameters = [i.detach().cpu().numpy() for i in global_model_parameters.parameters()]
         global_model_original_shape = [i.shape for i in global_model_parameters]
         client_evaluate_list_fedpredict = []
         size_of_parameters = []
@@ -657,7 +669,7 @@ def fedpredict_server(global_model_parameters: np.array, client_evaluate_list: L
                 compressed_size += sum(i.nbytes for i in parameters_to_send)
                 continue
 
-            parameters_to_send = None
+            parameters_to_send = global_model_parameters
 
             if process_parameters:
                 if "dls" in compression:
@@ -665,6 +677,8 @@ def fedpredict_server(global_model_parameters: np.array, client_evaluate_list: L
                     parameters_to_send, M = dls(lt, global_model_parameters, t, nt, T, df)
                     logger.info(f"Number of layers: {len(M)}")
                 elif "per" in compression:
+                    M = len([i for i in range(len(global_model_parameters))])
+                    logger.info(f"Original number of layers {M}")
                     parameters_to_send, M = per(lt, global_model_parameters)
                     logger.info(f"Number of layers: {len(M)}")
                 layers_fraction = []
@@ -763,30 +777,30 @@ def compredict(round_of_last_fit, layers_comppression_range, num_rounds, server_
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
-def layer_compression_range(model_shape):
-    try:
-
-        layers_range = []
-        for shape in model_shape:
-
-            layer_range = 0
-            if len(shape) >= 2:
-                shape = shape[-2:]
-
-                col = shape[1]
-                for n_components in range(1, col + 1):
-                    if if_reduces_size(shape, n_components):
-                        layer_range = n_components
-                    else:
-                        break
-
-            layers_range.append(layer_range)
-
-        return layers_range
-
-    except Exception as e:
-        logger.critical("Method: layer compression range")
-        logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
+# def layer_compression_range(model_shape):
+#     try:
+#
+#         layers_range = []
+#         for shape in model_shape:
+#
+#             layer_range = 0
+#             if len(shape) >= 2:
+#                 shape = shape[-2:]
+#
+#                 col = shape[1]
+#                 for n_components in range(1, col + 1):
+#                     if if_reduces_size(shape, n_components):
+#                         layer_range = n_components
+#                     else:
+#                         break
+#
+#             layers_range.append(layer_range)
+#
+#         return layers_range
+#
+#     except Exception as e:
+#         logger.critical("Method: layer compression range")
+#         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
 # ===========================================================================================
