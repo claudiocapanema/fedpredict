@@ -232,8 +232,9 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
             global_model = copy.deepcopy(global_model).to(device)
         elif type(global_model) == list and type(global_model_original_shape) == list:
             assert len(global_model_original_shape) > 0, "original_global_model_shape must not be empty"
+            # logger.info(f"comprimido {[i.shape for i in global_model]}")
             global_model = decompress_global_parameters(global_model, global_model_original_shape, local_model).to(device)
-            # logger.info(f"descomprimido {[i.shape for i in global_model.parameters()]} shape {global_model_original_shape} o")
+            # logger.info(f"descomprimido {[i.shape for i in global_model.parameters()]} \n original {global_model_original_shape} o")
 
 
         assert t >= 0, f"t must be greater or equal than 0, but you passed {t}"
@@ -276,6 +277,7 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
     except Exception as e:
         logger.critical("Method: fedpredict_client_torch")
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
+        exit()
 
 
 def fedpredict_client_versions_torch(local_model: torch.nn.Module,
@@ -293,15 +295,15 @@ def fedpredict_client_versions_torch(local_model: torch.nn.Module,
 
     # Using 'torch.load'
     try:
-        number_of_layers_local_model = count_layers(local_model)
-        number_of_layers_global_model = count_layers(global_model)
-        M = [i for i in range(number_of_layers_local_model)]
+        number_of_layers_local_model, M_local = count_layers(local_model)
+        number_of_layers_global_model, M_global = count_layers(global_model)
+        M = M_global
 
-        if number_of_layers_local_model != number_of_layers_global_model:
-            raise Exception("""Lenght of parameters of the global model is {} and is different from the M {}""".format(
-                len(global_model), len(M)))
+        # if number_of_layers_local_model != number_of_layers_global_model:
+        #     raise Exception("""Lenght of parameters of the global model is {} and is different from the M {}""".format(
+        #         number_of_layers_global_model, number_of_layers_local_model))
 
-        local_model = fedpredict_dynamic_combine_models(global_model, local_model, t, T, nt, M,
+        local_model = fedpredict_dynamic_combine_models(global_model, local_model, t, T, nt, M_global,
                                                         s, fc, il, dh, ps, logs)
 
         return local_model
@@ -321,22 +323,21 @@ def torch_to_list_of_numpy(model: torch.nn.Module):
 
 def decompress_global_parameters(compressed_global_model_parameters: List[NDArrays], global_model_original_shape: List[Tuple], model_base: torch.nn.Module):
     try:
-        if len(compressed_global_model_parameters) == 0:
+        if len(compressed_global_model_parameters) == 0 or len(compressed_global_model_parameters) <= len(global_model_original_shape):
             is_layer_selection = True
         else:
             is_layer_selection = False
         for i in range(min([len(compressed_global_model_parameters), len(global_model_original_shape)])):
             compressed_shape = compressed_global_model_parameters[i].shape
             original_shape = global_model_original_shape[i]
+            # logger.info(f"comparar layer {i} compressed {compressed_shape} original {original_shape}")
             if compressed_shape != original_shape:
                 is_layer_selection = False
-            else:
-                is_layer_selection = True
                 break
 
-        # logger.debug("is_layer_selection", is_layer_selection)
-
+        # logger.info(f"is layer selection {is_layer_selection}")
         if len(compressed_global_model_parameters) > 0 and not is_layer_selection:
+            # logger.info("vai descomprimir")
             decompressed_gradients = inverse_parameter_svd_reading(compressed_global_model_parameters, global_model_original_shape)
             parameters = [torch.Tensor(i.tolist()) for i in decompressed_gradients]
         else:
@@ -369,6 +370,7 @@ def fedpredict_dynamic_combine_models(global_parameters, model, t, T, nt, M, s, 
                     old_param.data = (
                             global_model_weight * new_param.data.clone() + local_model_weights * old_param.data.clone())
                 else:
+                    logger.info(f"t {t} T {T} nt {nt} M {M} s {s}")
                     raise ValueError(f"Layer {count} has different shapes: global model {new_param.shape} and local model {old_param.shape}")
             count += 1
 
@@ -379,8 +381,11 @@ def fedpredict_dynamic_combine_models(global_parameters, model, t, T, nt, M, s, 
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 def count_layers(model):
-    contador = 0
-    for i in model.parameters():
+    count = 0
+    M = []
+    for i, param in enumerate(model.parameters()):
         # Contar apenas módulos que são instâncias de camadas com parâmetros (Linear, Conv2d, etc.)
-        contador += 1
-    return contador
+        if param.shape[-1] > 0:
+            count += 1
+            M.append(i)
+    return count, M

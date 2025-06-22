@@ -233,7 +233,6 @@ def layer_compression_range(model_shape):
 def dls(lt, parameters, server_round, nt, num_rounds, df):
     try:
         M = [i for i in range(len(parameters))]
-        logger.info(f"Original number of layers {M}")
         n_layers = len(parameters) / 2
 
         size_list = []
@@ -272,10 +271,8 @@ def per(lt, parameters):
 
     """
     try:
-        M = len([i for i in range(len(parameters))])
-        logger.info(f"Original number of layers {M}")
+        M = [i for i in range(len(parameters))]
         n_layers = len(parameters) / 2
-
         size_list = []
         for i in range(len(parameters)):
             tamanho = get_size(parameters[i])
@@ -564,6 +561,9 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
         logger.debug(f"round t {t} compression technique: {compression}")
         if compression in ["fedkd", "compredict", "dls_compredict"]:
             layers_compression_range = layer_compression_range(model_shape)
+            logger.info(f"compression range: {layers_compression_range}")
+            logger.info(f"global model original shape: {global_model_original_shape}")
+            # exit()
         fedkd = None
         original_size = sum(i.nbytes for i in global_model_parameters) * len(client_evaluate_list)
         compressed_size = 0
@@ -725,56 +725,56 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
-def compredict(round_of_last_fit, layers_comppression_range, num_rounds, server_round, M, parameter):
-
-    try:
-
-        nt = server_round - round_of_last_fit
-        layers_fraction = []
-        if round_of_last_fit >= 1:
-            n_components_list = []
-            for i in range(M):
-                # if i % 2 == 0:
-                layer = parameter[i]
-                if len(layer.shape) >= 2:
-
-                    compression_range = layers_comppression_range[i]
-                    if compression_range > 0:
-                        n_components = fedpredict_core_compredict(server_round, num_rounds, nt, layer,
-                                                                  compression_range)
-                    else:
-                        n_components = None
-                else:
-                    n_components = None
-
-                if n_components is None:
-                    layers_fraction.append(1)
-                else:
-                    layers_fraction.append(n_components / layer.shape[-1])
-
-                n_components_list.append(n_components)
-
-            parameter = parameter_svd_write(parameter, n_components_list)
-
-
-            logger.info(f"Compredict model: {[i.shape for i in parameter]}")
-
-        else:
-            new_parameter = []
-            for param in parameter:
-                new_parameter.append(param)
-                new_parameter.append(np.array([]))
-                new_parameter.append(np.array([]))
-
-            parameter = new_parameter
-
-            layers_fraction = [1] * len(parameter)
-
-        return parameter, layers_fraction
-
-    except Exception as e:
-        logger.critical("Method: compredict")
-        logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
+# def compredict(round_of_last_fit, layers_comppression_range, num_rounds, server_round, M, parameter):
+#
+#     try:
+#
+#         nt = server_round - round_of_last_fit
+#         layers_fraction = []
+#         if round_of_last_fit >= 1:
+#             n_components_list = []
+#             for i in range(M):
+#                 # if i % 2 == 0:
+#                 layer = parameter[i]
+#                 if len(layer.shape) >= 2:
+#
+#                     compression_range = layers_comppression_range[i]
+#                     if compression_range > 0:
+#                         n_components = fedpredict_core_compredict(server_round, num_rounds, nt, layer,
+#                                                                   compression_range)
+#                     else:
+#                         n_components = None
+#                 else:
+#                     n_components = None
+#
+#                 if n_components is None:
+#                     layers_fraction.append(1)
+#                 else:
+#                     layers_fraction.append(n_components / layer.shape[-1])
+#
+#                 n_components_list.append(n_components)
+#
+#             parameter = parameter_svd_write(parameter, n_components_list)
+#
+#
+#             logger.info(f"Compredict model: {[i.shape for i in parameter]}")
+#
+#         else:
+#             new_parameter = []
+#             for param in parameter:
+#                 new_parameter.append(param)
+#                 new_parameter.append(np.array([]))
+#                 new_parameter.append(np.array([]))
+#
+#             parameter = new_parameter
+#
+#             layers_fraction = [1] * len(parameter)
+#
+#         return parameter, layers_fraction
+#
+#     except Exception as e:
+#         logger.critical("Method: compredict")
+#         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
 
 # def layer_compression_range(model_shape):
