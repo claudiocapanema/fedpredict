@@ -568,10 +568,16 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
         original_size = sum(i.nbytes for i in global_model_parameters) * len(client_evaluate_list)
         compressed_size = 0
         for client_tuple in client_evaluate_list:
-            client = client_tuple['client']
-            client_id = client_tuple['cid']
-            nt = client_tuple['nt']
-            lt = client_tuple['lt']
+            if fl_framework =='flwr':
+                client = client_tuple[0]
+                config = client_tuple[1]
+                client = client_tuple['client']
+                nt = config['nt']
+                lt = config['lt']
+            else:
+                client = client_tuple['client']
+                nt = client_tuple['nt']
+                lt = client_tuple['lt']
             if nt != 0 and nt in previously_reduced_parameters:
                 process_parameters = False
             else:
