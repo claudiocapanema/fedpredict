@@ -570,7 +570,7 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
         for client_tuple in client_evaluate_list:
             if fl_framework =='flwr':
                 client = client_tuple[0]
-                config = client_tuple[1]
+                config = client_tuple[1].config
                 nt = config['nt']
                 lt = config['lt']
             else:
