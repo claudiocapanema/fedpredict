@@ -112,13 +112,13 @@ def fedkd_compression(lt, layers_compression_range, T, t, M, parameter):
 
             n_components_list.append(n_components)
 
-        logger.debug(f"Vetor de componentes: {n_components_list}")
+        logger.info(f"Vetor de componentes: {n_components_list}")
 
         parameter = parameter_svd_write(parameter, n_components_list)
         tmin = 0.01
         tmax = 0.95
         energy = tmin + (tmax-tmin)*(t / T)
-        logger.debug(f"energy: {energy}")
+        logger.info(f"energy: {energy}")
         parameter = fedkd_compression_core(parameter, energy)
         parameter = [np.array(i) for i in parameter]
 

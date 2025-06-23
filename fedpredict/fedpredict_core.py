@@ -523,8 +523,9 @@ def get_size(parameter):
         logger.critical("Method: get_size")
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
-def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Module], client_evaluate_list: List[Tuple], t: int, T: int, model_shape: List,
-                      compression: str, df: float = 0, fl_framework=None)-> Union[List[Dict], Tuple[int, Dict]]:
+def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Module],
+                      client_evaluate_list: List[Tuple], t: int, T: int, compression: str, df: float = 0,
+                      fl_framework=None) -> Union[List[Dict], Tuple[int, Dict]]:
     """
         This function compresses the global model parameters using the specified "compression" technique.
 
@@ -535,8 +536,6 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
                 List of clients' tuples.
             t: int, required
             T: int, required
-            model_shape: List, required
-                Model shape.
             compression: str, required
                 Compŕession technique. Possible values: "dls", "compredict", "dls_compredict", "fedkd", "spasification", "per".
             df: float, optional. Default=0
@@ -560,7 +559,7 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
         previously_reduced_parameters = {}
         logger.debug(f"round t {t} compression technique: {compression}")
         if compression in ["fedkd", "compredict", "dls_compredict"]:
-            layers_compression_range = layer_compression_range(model_shape)
+            layers_compression_range = layer_compression_range(global_model_original_shape)
             logger.info(f"compression range: {layers_compression_range}")
             logger.info(f"global model original shape: {global_model_original_shape}")
             # exit()
@@ -587,7 +586,7 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
             config = {}
             config['nt'] = nt
             config['T'] = T
-            M = [i for i in range(len(model_shape))]
+            M = [i for i in range(len(global_model_original_shape))]
             parameters_to_send = None
             # When client trained in the current round (nt=0) it is not needed to send parameters (local model is already updated)
             if nt == 0 and compression not in ["fedkd", None]:
