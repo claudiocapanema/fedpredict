@@ -277,7 +277,6 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
     except Exception as e:
         logger.critical("Method: fedpredict_client_torch")
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
-        exit()
 
 
 def fedpredict_client_versions_torch(local_model: torch.nn.Module,
