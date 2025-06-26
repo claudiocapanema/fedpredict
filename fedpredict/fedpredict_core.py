@@ -554,6 +554,8 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
         global_model_original_shape = [i.shape for i in global_model_parameters]
         client_evaluate_list_fedpredict = []
         size_of_parameters = []
+        if fl_framework == "flower":
+            client_evaluate_list_fedpredict = client_evaluate_list
 
         # Reuse previously compressed parameters
         previously_reduced_parameters = {}
@@ -566,7 +568,8 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
         fedkd = None
         original_size = sum(i.nbytes for i in global_model_parameters) * len(client_evaluate_list)
         compressed_size = 0
-        for client_tuple in client_evaluate_list:
+        for i in range(len(client_evaluate_list)):
+            client_tuple = client_evaluate_list[i]
             if fl_framework =='flwr':
                 client = client_tuple[0]
                 config = client_tuple[1].config
@@ -600,7 +603,7 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
                 elif fl_framework == 'flwr':
                     if _has_flwr:
                         evaluate_ins = EvaluateIns(ndarrays_to_parameters(np.array([])), config)
-                        client_evaluate_list_fedpredict.append((client, evaluate_ins))
+                        client_evaluate_list_fedpredict[i] = (client, evaluate_ins)
                     else:
                         raise ImportError(
                             "Flower is required. Digit: 'pip install fedpredict[flwr]' or 'pip install fedpredict[full]'")
@@ -626,7 +629,7 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
                 elif fl_framework =='flwr':
                     if _has_flwr:
                         evaluate_ins = EvaluateIns(ndarrays_to_parameters(parameters_to_send), config)
-                        client_evaluate_list_fedpredict.append((client, evaluate_ins))
+                        client_evaluate_list_fedpredict[i] = (client, evaluate_ins)
                     else:
                         raise ImportError(
                             "Flower is required. Digit: 'pip install fedpredict[flwr]' or 'pip install fedpredict[full]'")
@@ -647,7 +650,7 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
                 elif fl_framework == 'flwr':
                     if _has_flwr:
                         evaluate_ins = EvaluateIns(ndarrays_to_parameters(parameters_to_send), config)
-                        client_evaluate_list_fedpredict.append((client, evaluate_ins))
+                        client_evaluate_list_fedpredict[i] = (client, evaluate_ins)
                     else:
                         raise ImportError(
                             "Flower is required. Digit: 'pip install fedpredict[flwr]' or 'pip install fedpredict[full]'")
@@ -666,7 +669,7 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
                 elif fl_framework == 'flwr':
                     if _has_flwr:
                         evaluate_ins = EvaluateIns(ndarrays_to_parameters(global_model_parameters), config)
-                        client_evaluate_list_fedpredict.append((client, evaluate_ins))
+                        client_evaluate_list_fedpredict[i] = (client, evaluate_ins)
                     else:
                         raise ImportError(
                             "Flower is required. Digit: 'pip install fedpredict[flwr]' or 'pip install fedpredict[full]'")
@@ -717,7 +720,7 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
             elif fl_framework == 'flwr':
                 if _has_flwr:
                     evaluate_ins = EvaluateIns(ndarrays_to_parameters(parameters_to_send), config)
-                    client_evaluate_list_fedpredict.append((client, evaluate_ins))
+                    client_evaluate_list_fedpredict[i] = (client, evaluate_ins)
                 else:
                     raise ImportError("Flower is required. Digit: 'pip install fedpredict[flwr]' or 'pip install fedpredict[full]'")
             compressed_size += sum(i.nbytes for i in parameters_to_send)
