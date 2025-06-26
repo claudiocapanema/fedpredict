@@ -579,6 +579,9 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
                 client = client_tuple['client']
                 nt = client_tuple['nt']
                 lt = client_tuple['lt']
+                config = {}
+                config['nt'] = nt
+                config['T'] = T
             if nt != 0 and nt in previously_reduced_parameters:
                 process_parameters = False
             else:
@@ -586,9 +589,7 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
 
             if compression is None:
                 process_parameters = True
-            config = {}
-            config['nt'] = nt
-            config['T'] = T
+
             M = [i for i in range(len(global_model_original_shape))]
             parameters_to_send = None
             # When client trained in the current round (nt=0) it is not needed to send parameters (local model is already updated)
