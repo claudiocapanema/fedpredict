@@ -554,7 +554,7 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
         global_model_original_shape = [i.shape for i in global_model_parameters]
         client_evaluate_list_fedpredict = []
         size_of_parameters = []
-        if fl_framework == "flower":
+        if fl_framework == "flwr":
             client_evaluate_list_fedpredict = client_evaluate_list
 
         # Reuse previously compressed parameters
