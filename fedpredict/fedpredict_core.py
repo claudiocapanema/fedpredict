@@ -233,6 +233,7 @@ def layer_compression_range(model_shape):
 def dls(lt, parameters, server_round, nt, num_rounds, df):
     try:
         M = [i for i in range(len(parameters))]
+        M_original = copy.deepcopy(M)
         n_layers = len(parameters) / 2
 
         size_list = []
@@ -241,7 +242,6 @@ def dls(lt, parameters, server_round, nt, num_rounds, df):
             size_list.append(tamanho)
         if lt >= 1:
             # baixo-cima
-
             M = fedpredict_core_layer_selection(t=server_round, T=num_rounds, nt=nt, n_layers=n_layers, df=df)
 
             new_parameters = []
@@ -254,6 +254,7 @@ def dls(lt, parameters, server_round, nt, num_rounds, df):
         for i in range(len(parameters)):
             tamanho = parameters[i].nbytes
             size_list.append(tamanho)
+        logger.info(f"dls: initial layers {len(M_original)} selected layers {len(M)}")
         return parameters, M
 
     except Exception as e:
@@ -333,7 +334,6 @@ def fedpredict_dynamic_core(t, T, nt, s=1, fc=None, il=None, dh=None, ps=None, l
 
 def fedpredict_core_layer_selection(t, T, nt, n_layers, df):
     try:
-
         # 9
         if nt == 0:
             shared_layers = 0
@@ -549,11 +549,16 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
     """
     try:
         assert isinstance(global_model_parameters, torch.nn.Module) or isinstance(global_model_parameters, list), "global model parameters must be of type torch.nn.Module or list"
+        assert type(df) == int or type(df) == float, "df must be of type int or float"
+        assert df >= 0 and df <= 1, "df must be in range [0,1]"
         if isinstance(global_model_parameters, torch.nn.Module):
             global_model_parameters = [i.detach().cpu().numpy() for i in global_model_parameters.parameters()]
         global_model_original_shape = [i.shape for i in global_model_parameters]
         client_evaluate_list_fedpredict = []
         size_of_parameters = []
+        if compression is None or compression not in ["dls", "compredict", "dls_compredict", "fedkd", "sparsification", "per"]:
+            logger.info(f"Compression {compression} is not supported or is invalid. Valid values are: 'dls', 'compredict', 'dls_compredict', 'fedkd', 'spasification', 'per'")
+            return client_evaluate_list
         if fl_framework == "flwr":
             client_evaluate_list_fedpredict = client_evaluate_list
 
@@ -587,13 +592,10 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
             else:
                 process_parameters = True
 
-            if compression is None:
-                process_parameters = True
-
             M = [i for i in range(len(global_model_original_shape))]
             parameters_to_send = None
             # When client trained in the current round (nt=0) it is not needed to send parameters (local model is already updated)
-            if nt == 0 and compression not in ["fedkd", None]:
+            if nt == 0 and compression not in ["fedkd", "sparsification", "", None]:
                 config['M'] = []
                 config['decompress'] = False
                 config['layers_fraction'] = 0
@@ -658,24 +660,24 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
                 compressed_size += sum(i.nbytes for i in parameters_to_send)
                 continue
 
-            elif compression is None:
-                logger.info(f"compression None")
-                config['M'] = [i for i in range(len(global_model_parameters))]
-                config['decompress'] = False
-                config['layers_fraction'] = 1
-                if fl_framework is None:
-                    config['parameters'] = global_model_parameters.tolist()
-                    config['global_model_original_shape'] = global_model_original_shape
-                    client_evaluate_list_fedpredict.append(config)
-                elif fl_framework == 'flwr':
-                    if _has_flwr:
-                        evaluate_ins = EvaluateIns(ndarrays_to_parameters(global_model_parameters), config)
-                        client_evaluate_list_fedpredict[i] = (client, evaluate_ins)
-                    else:
-                        raise ImportError(
-                            "Flower is required. Digit: 'pip install fedpredict[flwr]' or 'pip install fedpredict[full]'")
-                compressed_size += sum(i.nbytes for i in parameters_to_send)
-                continue
+            # elif compression in ["", None]:
+            #     logger.info(f"compression None")
+            #     config['M'] = [i for i in range(len(global_model_parameters))]
+            #     config['decompress'] = False
+            #     config['layers_fraction'] = 1
+            #     if fl_framework is None:
+            #         config['parameters'] = global_model_parameters.tolist()
+            #         config['global_model_original_shape'] = global_model_original_shape
+            #         client_evaluate_list_fedpredict.append(config)
+            #     elif fl_framework == 'flwr':
+            #         if _has_flwr:
+            #             evaluate_ins = EvaluateIns(ndarrays_to_parameters(global_model_parameters), config)
+            #             client_evaluate_list_fedpredict[i] = (client, evaluate_ins)
+            #         else:
+            #             raise ImportError(
+            #                 "Flower is required. Digit: 'pip install fedpredict[flwr]' or 'pip install fedpredict[full]'")
+            #     compressed_size += sum(i.nbytes for i in parameters_to_send)
+            #     continue
 
             parameters_to_send = global_model_parameters
 
@@ -708,7 +710,7 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
                 parameters_to_send, M, layers_fraction, decompress = previously_reduced_parameters[nt]
 
             parameters_to_send = [np.array(i) for i in parameters_to_send]
-            for i in range(1, len(global_model_parameters)):
+            for i in range(0, len(global_model_parameters)):
                 size_of_parameters.append(get_size(global_model_parameters[i]))
             config['original_size_bytes'] = size_of_parameters
             config['M'] = M

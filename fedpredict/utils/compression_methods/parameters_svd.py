@@ -142,8 +142,10 @@ def if_reduces_size(shape, n_components, dtype=np.float64):
 def inverse_parameter_svd_reading(arrays, model_shape):
     try:
         M = len(model_shape)
+        if len(arrays) > M:
+            M = int(len(arrays) / 3)
         reconstructed_model = []
-        # logger.info(f"antes inverse: {model_shape}")
+        # logger.info(f"arrays {len(arrays)} antes inverse: {len(model_shape)}")
 
         for i in range(M):
             layer_shape = model_shape[i]

@@ -232,7 +232,7 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
             global_model = copy.deepcopy(global_model).to(device)
         elif type(global_model) == list and type(global_model_original_shape) == list:
             assert len(global_model_original_shape) > 0, "original_global_model_shape must not be empty"
-            # logger.info(f"comprimido {[i.shape for i in global_model]}")
+            # logger.info(f"glooal model recebido comprimido {len([i.shape for i in global_model])}")
             global_model = decompress_global_parameters(global_model, global_model_original_shape, local_model).to(device)
             # logger.info(f"descomprimido {[i.shape for i in global_model.parameters()]} \n original {global_model_original_shape} o")
 
@@ -363,6 +363,7 @@ def fedpredict_dynamic_combine_models(global_parameters, model, t, T, nt, M, s, 
 
         local_model_weights, global_model_weight = fedpredict_dynamic_core(t, T, nt, s, fc, il, dh, ps, logs)
         count = 0
+        logger.info(f"m: {M} layers {len([i for i in model.parameters()])}")
         for new_param, old_param in zip(global_parameters.parameters(), model.parameters()):
             if count in M:
                 if new_param.shape == old_param.shape:
