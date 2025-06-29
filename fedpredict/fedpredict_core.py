@@ -606,7 +606,7 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
                     client_evaluate_list_fedpredict.append(config)
                 elif fl_framework == 'flwr':
                     if _has_flwr:
-                        evaluate_ins = EvaluateIns(ndarrays_to_parameters(np.array([])), config)
+                        evaluate_ins = EvaluateIns(ndarrays_to_parameters([]), config)
                         client_evaluate_list_fedpredict[i] = (client, evaluate_ins)
                     else:
                         raise ImportError(
@@ -632,8 +632,8 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
                     client_evaluate_list_fedpredict.append(config)
                 elif fl_framework =='flwr':
                     if _has_flwr:
-                        config["parameters"] = pickle.dumps(parameters_to_send)
-                        evaluate_ins = EvaluateIns(ndarrays_to_parameters(np.array([])), config)
+                        # config["parameters"] = pickle.dumps(parameters_to_send)
+                        evaluate_ins = EvaluateIns(ndarrays_to_parameters(parameters_to_send), config)
                         client_evaluate_list_fedpredict[i] = (client, evaluate_ins)
                     else:
                         raise ImportError(
@@ -655,7 +655,7 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
                 elif fl_framework == 'flwr':
                     if _has_flwr:
                         config["parameters"] = pickle.dumps(parameters_to_send)
-                        evaluate_ins = EvaluateIns(ndarrays_to_parameters(np.array([])), config)
+                        evaluate_ins = EvaluateIns(ndarrays_to_parameters(parameters_to_send), config)
                         client_evaluate_list_fedpredict[i] = (client, evaluate_ins)
                     else:
                         raise ImportError(
@@ -725,8 +725,8 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
                 client_evaluate_list_fedpredict.append(config)
             elif fl_framework == 'flwr':
                 if _has_flwr:
-                    config["parameters"] = pickle.dumps(parameters_to_send)
-                    evaluate_ins = EvaluateIns(ndarrays_to_parameters(np.array([])), config)
+                    # config["parameters"] = pickle.dumps(parameters_to_send)
+                    evaluate_ins = EvaluateIns(ndarrays_to_parameters(parameters_to_send), config)
                     client_evaluate_list_fedpredict[i] = (client, evaluate_ins)
                 else:
                     raise ImportError("Flower is required. Digit: 'pip install fedpredict[flwr]' or 'pip install fedpredict[full]'")
