@@ -597,19 +597,12 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
             parameters_to_send = None
             # When client trained in the current round (nt=0) it is not needed to send parameters (local model is already updated)
             if nt == 0 and compression not in ["fedkd", "sparsification", "", None]:
-                config['M'] = []
-                config['decompress'] = False
-                config['layers_fraction'] = 0
                 if fl_framework is None:
                     config['parameters'] = []
-                    config['global_model_original_shape'] = global_model_original_shape
                     client_evaluate_list_fedpredict.append(config)
                 elif fl_framework == 'flwr':
                     if _has_flwr:
-                        config["parameters"] = pickle.dumps([])
-                        # evaluate_ins = EvaluateIns(ndarrays_to_parameters([]), config)
-                        # client_evaluate_list_fedpredict[i] = (client, evaluate_ins)
-                        client_evaluate_list_fedpredict[i][1].parameters = ndarrays_to_parameters(parameters_to_send)
+                        client_evaluate_list_fedpredict[i][1].parameters = ndarrays_to_parameters([])
                         client_evaluate_list_fedpredict[i][1].config = config
                     else:
                         raise ImportError(
@@ -625,20 +618,12 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
                 else:
                     # Reuse compressed parameters
                     parameters_to_send = fedkd
-                config['decompress'] = True
-                config['M'] = M
-                config['layers_fraction'] = layers_fraction
 
                 if fl_framework is None:
                     config['parameters'] = parameters_to_send
-                    config['global_model_original_shape'] = global_model_original_shape
                     client_evaluate_list_fedpredict.append(config)
                 elif fl_framework =='flwr':
                     if _has_flwr:
-                        config["parameters"] = pickle.dumps(parameters_to_send)
-                        # evaluate_ins = EvaluateIns(ndarrays_to_parameters(parameters_to_send), config)
-                        # evaluate_ins = EvaluateIns(ndarrays_to_parameters([]), config)
-                        # client_evaluate_list_fedpredict[i] = (client, evaluate_ins)
                         client_evaluate_list_fedpredict[i][1].parameters = ndarrays_to_parameters(parameters_to_send)
                         client_evaluate_list_fedpredict[i][1].config = config
                     else:
@@ -651,19 +636,12 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
 
                 t, k_values = sparse_crs_top_k([np.abs(i) for i in global_model_parameters], k)
                 parameters_to_send = t
-                config['decompress'] = False
-                config['M'] = M
-                config['layers_fraction'] = 1
                 if fl_framework is None:
                     config['parameters'] = parameters_to_send
                     config['global_model_original_shape'] = global_model_original_shape
                     client_evaluate_list_fedpredict.append(config)
                 elif fl_framework == 'flwr':
                     if _has_flwr:
-                        config["parameters"] = pickle.dumps(parameters_to_send)
-                        # evaluate_ins = EvaluateIns(ndarrays_to_parameters(parameters_to_send), config)
-                        # evaluate_ins = EvaluateIns(ndarrays_to_parameters([]), config)
-                        # client_evaluate_list_fedpredict[i] = (client, evaluate_ins)
                         client_evaluate_list_fedpredict[i][1].parameters = ndarrays_to_parameters(parameters_to_send)
                         client_evaluate_list_fedpredict[i][1].config = config
                     else:
@@ -710,34 +688,22 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
                     parameters_to_send, layers_fraction = compredict(
                         lt, layers_compression_range,
                         T, t, len(M), parameters_to_send)
-                    config['decompress'] = True
-                    pass
-                else:
-                    config['decompress'] = False
-                decompress = config['decompress']
-                previously_reduced_parameters[nt] = [copy.deepcopy(parameters_to_send), M, layers_fraction, decompress]
+                previously_reduced_parameters[nt] = [copy.deepcopy(parameters_to_send), M, layers_fraction]
 
             else:
                 # logger.info(f"Reused parameters for nt == {nt}")
-                parameters_to_send, M, layers_fraction, decompress = previously_reduced_parameters[nt]
+                parameters_to_send, M, layers_fraction = previously_reduced_parameters[nt]
 
             parameters_to_send = [np.array(i) for i in parameters_to_send]
             for i in range(0, len(global_model_parameters)):
                 size_of_parameters.append(get_size(global_model_parameters[i]))
-            config['original_size_bytes'] = size_of_parameters
-            config['M'] = M
-            config['decompress'] = decompress
-            config['layers_fraction'] = layers_fraction
             if fl_framework is None:
                 config['parameters'] = parameters_to_send
-                config['global_model_original_shape'] = global_model_original_shape
                 client_evaluate_list_fedpredict.append(config)
             elif fl_framework == 'flwr':
                 if _has_flwr:
-                    config["parameters"] = pickle.dumps(parameters_to_send)
-                    # evaluate_ins = EvaluateIns(ndarrays_to_parameters(parameters_to_send), config)
-                    evaluate_ins = EvaluateIns(ndarrays_to_parameters([]), config)
-                    client_evaluate_list_fedpredict[i] = (client, evaluate_ins)
+                    client_evaluate_list_fedpredict[i][1].parameters = ndarrays_to_parameters(parameters_to_send)
+                    client_evaluate_list_fedpredict[i][1].config = config
                 else:
                     raise ImportError("Flower is required. Digit: 'pip install fedpredict[flwr]' or 'pip install fedpredict[full]'")
             compressed_size += sum(i.nbytes for i in parameters_to_send)
