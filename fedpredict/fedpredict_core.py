@@ -7,6 +7,7 @@ from .utils.compression_methods.sparsification import sparse_crs_top_k, to_dense
 from .utils.compression_methods.fedkd import fedkd_compression
 import os
 import torch
+import pickle
 
 import math
 
@@ -631,7 +632,8 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
                     client_evaluate_list_fedpredict.append(config)
                 elif fl_framework =='flwr':
                     if _has_flwr:
-                        evaluate_ins = EvaluateIns(ndarrays_to_parameters(parameters_to_send), config)
+                        config["parameters"] = pickle.dumps(parameters_to_send)
+                        evaluate_ins = EvaluateIns(ndarrays_to_parameters(np.array([])), config)
                         client_evaluate_list_fedpredict[i] = (client, evaluate_ins)
                     else:
                         raise ImportError(
@@ -652,7 +654,8 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
                     client_evaluate_list_fedpredict.append(config)
                 elif fl_framework == 'flwr':
                     if _has_flwr:
-                        evaluate_ins = EvaluateIns(ndarrays_to_parameters(parameters_to_send), config)
+                        config["parameters"] = pickle.dumps(parameters_to_send)
+                        evaluate_ins = EvaluateIns(ndarrays_to_parameters(np.array([])), config)
                         client_evaluate_list_fedpredict[i] = (client, evaluate_ins)
                     else:
                         raise ImportError(
@@ -722,7 +725,8 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
                 client_evaluate_list_fedpredict.append(config)
             elif fl_framework == 'flwr':
                 if _has_flwr:
-                    evaluate_ins = EvaluateIns(ndarrays_to_parameters(parameters_to_send), config)
+                    config["parameters"] = pickle.dumps(parameters_to_send)
+                    evaluate_ins = EvaluateIns(ndarrays_to_parameters(np.array([])), config)
                     client_evaluate_list_fedpredict[i] = (client, evaluate_ins)
                 else:
                     raise ImportError("Flower is required. Digit: 'pip install fedpredict[flwr]' or 'pip install fedpredict[full]'")
