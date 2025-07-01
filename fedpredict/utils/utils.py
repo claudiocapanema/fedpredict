@@ -258,8 +258,10 @@ def fedpredict_layerwise_similarity(global_parameter, clients_parameters, simila
                 continue
             # df = pd.DataFrame({'Difference': difference_per_layer_vector[layer], 'x': [i for i in range(len(difference_per_layer_vectore[layer]))]})
             # box_plot(df=df, base_dir='', file_name="""boxplot_difference_layer_{}_round_{}_dataset_{}_alpha_{}""".format(str(layer), str(server_round), dataset, alpha), x_column=None, y_column='Difference', title='Difference between global and local parameters', y_lim=True, y_max=0.065)
-        logger.info(f" similaridade {similarity_per_layer_list}")
-        return similarity_per_layer, mean_similarity_per_layer, np.mean(layers_mean_similarity), similarity_per_layer_list
+        df = float(max(0, abs(np.mean(similarity_per_layer_list[0]) - np.mean(
+                        similarity_per_layer_list[num_layers - 2]))))
+        logger.info(f" similaridade {similarity_per_layer_list} df {df}")
+        return similarity_per_layer, mean_similarity_per_layer, np.mean(layers_mean_similarity), similarity_per_layer_list, df
     except Exception as e:
         logger.critical("Method: fedpredict_layerwise_similarity")
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))

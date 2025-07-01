@@ -556,7 +556,6 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
             global_model_parameters = [i.detach().cpu().numpy() for i in global_model_parameters.parameters()]
         global_model_original_shape = [i.shape for i in global_model_parameters]
         client_evaluate_list_fedpredict = []
-        size_of_parameters = []
         if compression is None or compression not in ["dls", "compredict", "dls_compredict", "fedkd", "sparsification", "per"]:
             logger.info(f"Compression {compression} is not supported or is invalid. Valid values are: 'dls', 'compredict', 'dls_compredict', 'fedkd', 'spasification', 'per'")
             return client_evaluate_list
@@ -695,8 +694,7 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
                 parameters_to_send, M, layers_fraction = previously_reduced_parameters[nt]
 
             parameters_to_send = [np.array(i) for i in parameters_to_send]
-            for i in range(0, len(global_model_parameters)):
-                size_of_parameters.append(get_size(global_model_parameters[i]))
+            compressed_size += sum(i.nbytes for i in parameters_to_send)
             if fl_framework is None:
                 config['parameters'] = parameters_to_send
                 client_evaluate_list_fedpredict.append(config)
