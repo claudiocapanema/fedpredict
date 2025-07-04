@@ -571,7 +571,7 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
             logger.info(f"global model original shape: {global_model_original_shape}")
             # exit()
         fedkd = None
-        original_size = sum(i.nbytes for i in global_model_parameters) * len(client_evaluate_list)
+        original_size = sum([i.nbytes for i in global_model_parameters]) * len(client_evaluate_list)
         compressed_size = 0
         for i in range(len(client_evaluate_list)):
             client_tuple = client_evaluate_list[i]
@@ -628,7 +628,7 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
                     else:
                         raise ImportError(
                             "Flower is required. Digit: 'pip install fedpredict[flwr]' or 'pip install fedpredict[full]'")
-                compressed_size += sum(i.nbytes for i in parameters_to_send)
+                compressed_size += sum([i.nbytes for i in parameters_to_send])
                 continue
             elif compression == 'sparsification':
                 k = 0.3
@@ -645,7 +645,7 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
                     else:
                         raise ImportError(
                             "Flower is required. Digit: 'pip install fedpredict[flwr]' or 'pip install fedpredict[full]'")
-                compressed_size += sum(i.nbytes for i in parameters_to_send)
+                compressed_size += sum([i.nbytes for i in parameters_to_send])
                 continue
 
             # elif compression in ["", None]:
@@ -693,7 +693,6 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
                 parameters_to_send, M, layers_fraction = previously_reduced_parameters[nt]
 
             parameters_to_send = [np.array(i) for i in parameters_to_send]
-            compressed_size += sum(i.nbytes for i in parameters_to_send)
             if fl_framework is None:
                 config['parameters'] = parameters_to_send
                 client_evaluate_list_fedpredict.append(config)
@@ -703,7 +702,7 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
                     client_evaluate_list_fedpredict[i][1].config = config
                 else:
                     raise ImportError("Flower is required. Digit: 'pip install fedpredict[flwr]' or 'pip install fedpredict[full]'")
-            compressed_size += sum(i.nbytes for i in parameters_to_send)
+            compressed_size += sum([i.nbytes for i in parameters_to_send])
         logger.info(f"Original size {original_size} compressed size {compressed_size}. Economy of {((original_size - compressed_size) * 100) / original_size}")
         return client_evaluate_list_fedpredict
 
