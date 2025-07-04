@@ -633,8 +633,7 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
             elif compression == 'sparsification':
                 k = 0.3
 
-                t, k_values = sparse_crs_top_k([np.abs(i) for i in global_model_parameters], k)
-                parameters_to_send = t
+                parameters_to_send, k_values = sparse_crs_top_k([np.abs(i) for i in global_model_parameters], k)
                 if fl_framework is None:
                     config['parameters'] = parameters_to_send
                     config['global_model_original_shape'] = global_model_original_shape
