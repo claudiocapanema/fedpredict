@@ -4,9 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fedpredict"
-version = "0.0.47"
+version = "0.0.59"
 authors = [
     { name="Cláudio G. S. Capanema", email="claudiogs.capanema@gmail.com" },
+]
+maintainers = [
+  { name="Cláudio G. S. Capanema", email="claudiogs.capanema@gmail.com" }
 ]
 description = "FedPredict is a personalization plugin for Federated Learning methods."
 readme = "README.md"

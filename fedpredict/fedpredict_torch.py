@@ -363,7 +363,7 @@ def fedpredict_dynamic_combine_models(global_parameters, model, t, T, nt, M, s, 
 
         local_model_weights, global_model_weight = fedpredict_dynamic_core(t, T, nt, s, fc, il, dh, ps, logs)
         count = 0
-        logger.info(f"m: {M} layers {len([i for i in model.parameters()])}")
+        # logger.info(f"m: {M} layers {len([i for i in model.parameters()])}")
         for new_param, old_param in zip(global_parameters.parameters(), model.parameters()):
             if count in M:
                 if new_param.shape == old_param.shape:

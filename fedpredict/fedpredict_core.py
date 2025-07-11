@@ -255,7 +255,7 @@ def dls(lt, parameters, server_round, nt, num_rounds, df):
         for i in range(len(parameters)):
             tamanho = parameters[i].nbytes
             size_list.append(tamanho)
-        logger.info(f"dls: initial layers {len(M_original)} selected layers {len(M)}")
+        # logger.info(f"dls: initial layers {len(M_original)} selected layers {len(M)}")
         return parameters, M
 
     except Exception as e:
@@ -347,7 +347,7 @@ def fedpredict_core_layer_selection(t, T, nt, n_layers, df):
 
         shared_layers = [i for i in range(shared_layers * 2)]
 
-        logger.info(f"Shared layers: {shared_layers}, round: {t}")
+        # logger.info(f"Shared layers: {shared_layers}, round: {t}")
 
         return shared_layers
 
@@ -573,6 +573,7 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
         fedkd = None
         original_size = sum([i.nbytes for i in global_model_parameters]) * len(client_evaluate_list)
         compressed_size = 0
+        # logger.info(f"t: {t} chaves: {previously_reduced_parameters.keys()} tamanho: {len(client_evaluate_list)}")
         for i in range(len(client_evaluate_list)):
             client_tuple = client_evaluate_list[i]
             if fl_framework =='flwr':
@@ -587,11 +588,11 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
                 config = {}
                 config['nt'] = nt
                 config['T'] = T
+            # logger.info(f"p1 nt: {nt} chaves {previously_reduced_parameters.keys()}")
             if nt != 0 and nt in previously_reduced_parameters:
                 process_parameters = False
             else:
                 process_parameters = True
-
             M = [i for i in range(len(global_model_original_shape))]
             parameters_to_send = None
             # When client trained in the current round (nt=0) it is not needed to send parameters (local model is already updated)
@@ -617,7 +618,7 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
                 else:
                     # Reuse compressed parameters
                     parameters_to_send = fedkd
-
+                compressed_size += sum([i.nbytes for i in parameters_to_send])
                 if fl_framework is None:
                     config['parameters'] = parameters_to_send
                     client_evaluate_list_fedpredict.append(config)
@@ -628,12 +629,11 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
                     else:
                         raise ImportError(
                             "Flower is required. Digit: 'pip install fedpredict[flwr]' or 'pip install fedpredict[full]'")
-                compressed_size += sum([i.nbytes for i in parameters_to_send])
                 continue
             elif compression == 'sparsification':
                 k = 0.3
-
                 parameters_to_send, k_values = sparse_crs_top_k([np.abs(i) for i in global_model_parameters], k)
+                compressed_size += sum([i.nbytes for i in parameters_to_send])
                 if fl_framework is None:
                     config['parameters'] = parameters_to_send
                     config['global_model_original_shape'] = global_model_original_shape
@@ -645,7 +645,6 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
                     else:
                         raise ImportError(
                             "Flower is required. Digit: 'pip install fedpredict[flwr]' or 'pip install fedpredict[full]'")
-                compressed_size += sum([i.nbytes for i in parameters_to_send])
                 continue
 
             # elif compression in ["", None]:
@@ -666,19 +665,16 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
             #                 "Flower is required. Digit: 'pip install fedpredict[flwr]' or 'pip install fedpredict[full]'")
             #     compressed_size += sum(i.nbytes for i in parameters_to_send)
             #     continue
-
-            parameters_to_send = global_model_parameters
-
             if process_parameters:
+                parameters_to_send = global_model_parameters
                 if "dls" in compression:
-                    logger.info("dls")
                     parameters_to_send, M = dls(lt, global_model_parameters, t, nt, T, df)
-                    logger.info(f"Number of layers: {len(M)}")
+                    logger.info(f"t: {t} T: {T} df: {df} nt: {nt}\ndls - number of shared layers: {len(M)} of {len(global_model_parameters)} ({100*(round(len(M)/len(global_model_parameters), 2))}%). Round {t}")
                 elif "per" in compression:
                     M = len([i for i in range(len(global_model_parameters))])
                     logger.info(f"Original number of layers {M}")
                     parameters_to_send, M = per(lt, global_model_parameters)
-                    logger.info(f"Number of layers: {len(M)}")
+                    logger.info(f"per - number of shared layers: {len(M)} of {100*len(global_model_parameters)} ({(round(len(M)/len(global_model_parameters), 2))}%). Round {t}")
                 layers_fraction = []
                 if 'compredict' in compression:
                     logger.info("compredict")
@@ -687,12 +683,11 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
                         lt, layers_compression_range,
                         T, t, len(M), parameters_to_send)
                 previously_reduced_parameters[nt] = [copy.deepcopy(parameters_to_send), M, layers_fraction]
-
             else:
                 # logger.info(f"Reused parameters for nt == {nt}")
                 parameters_to_send, M, layers_fraction = previously_reduced_parameters[nt]
-
             parameters_to_send = [np.array(i) for i in parameters_to_send]
+            compressed_size += sum([i.nbytes for i in parameters_to_send])
             if fl_framework is None:
                 config['parameters'] = parameters_to_send
                 client_evaluate_list_fedpredict.append(config)
@@ -702,8 +697,7 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
                     client_evaluate_list_fedpredict[i][1].config = config
                 else:
                     raise ImportError("Flower is required. Digit: 'pip install fedpredict[flwr]' or 'pip install fedpredict[full]'")
-            compressed_size += sum([i.nbytes for i in parameters_to_send])
-        logger.info(f"Original size {original_size} compressed size {compressed_size}. Economy of {((original_size - compressed_size) * 100) / original_size}")
+        logger.info(f"Original size {original_size} compressed size {compressed_size}. Economy of {((original_size - compressed_size) * 100) / original_size}. #Round {t}")
         return client_evaluate_list_fedpredict
 
     except Exception as e:
