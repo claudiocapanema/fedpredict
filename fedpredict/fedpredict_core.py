@@ -526,7 +526,7 @@ def get_size(parameter):
 
 def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Module],
                       client_evaluate_list: List[Tuple], t: int, T: int, compression: str, df: float = 0,
-                      fl_framework=None) -> Union[List[Dict], Tuple[int, Dict]]:
+                      fl_framework=None, **kwargs) -> Union[List[Dict], Tuple[int, Dict]]:
     """
         This function compresses the global model parameters using the specified "compression" technique.
 
@@ -554,6 +554,12 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
         assert df >= 0 and df <= 1, "df must be in range [0,1]"
         if isinstance(global_model_parameters, torch.nn.Module):
             global_model_parameters = [i.detach().cpu().numpy() for i in global_model_parameters.parameters()]
+
+        if compression == "sparsification":
+            assert "k" in kwargs, "kwargs must contain 'k' key"
+            assert type(kwargs["k"]) == float, "kwargs['k'] must be of type float"
+            assert kwargs["k"] >= 0 and kwargs["k"] <= 1, "kwargs['k'] must be in range [0,1]"
+
         global_model_original_shape = [i.shape for i in global_model_parameters]
         client_evaluate_list_fedpredict = []
         if compression is None or compression not in ["dls", "compredict", "dls_compredict", "fedkd", "sparsification", "per"]:
@@ -631,7 +637,8 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
                             "Flower is required. Digit: 'pip install fedpredict[flwr]' or 'pip install fedpredict[full]'")
                 continue
             elif compression == 'sparsification':
-                k = 0.3
+                # Keep top k elements
+                k = kwargs["k"]
                 parameters_to_send, k_values = sparse_crs_top_k([np.abs(i) for i in global_model_parameters], k)
                 compressed_size += sum([i.nbytes for i in parameters_to_send])
                 if fl_framework is None:
