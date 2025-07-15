@@ -1,9 +1,56 @@
 import copy
+import logging
 
 import torch
 import numpy as np
 from scipy.sparse import coo_array, csr_matrix, csc_matrix, bsr_matrix, csc_array, dia_array, dok_array, lil_array, coo_matrix, csr_array, bsr_array, dia_matrix, dok_matrix, lil_matrix
 import sys
+
+class CustomFormatter(logging.Formatter):
+    """Logging colored formatter, adapted from https://stackoverflow.com/a/56944256/3638629"""
+
+    grey = '\x1b[38;21m'
+    blue = '\x1b[38;5;39m'
+    yellow = '\x1b[38;5;226m'
+    red = '\x1b[38;5;196m'
+    bold_red = '\x1b[31;1m'
+    reset = '\x1b[0m'
+
+    def __init__(self, fmt):
+        super().__init__()
+        self.fmt = fmt
+        self.FORMATS = {
+            logging.DEBUG: self.grey + self.fmt + self.reset,
+            logging.INFO: self.blue + self.fmt + self.reset,
+            logging.WARNING: self.yellow + self.fmt + self.reset,
+            logging.ERROR: self.red + self.fmt + self.reset,
+            logging.CRITICAL: self.bold_red + self.fmt + self.reset
+        }
+
+    def format(self, record):
+        log_fmt = self.FORMATS.get(record.levelno)
+        formatter = logging.Formatter(log_fmt)
+        return formatter.format(record)
+
+import datetime
+
+# Create custom logger logging all five levels
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+# Define format for logs
+fmt = '%(asctime)s | %(levelname)8s | %(message)s'
+
+# Create stdout handler for logging to the console (logs all five levels)
+stdout_handler = logging.StreamHandler()
+stdout_handler.setLevel(logging.DEBUG)
+stdout_handler.setFormatter(CustomFormatter(fmt))
+
+# Create file handler for logging to a file (logs all five levels)
+today = datetime.date.today()
+
+# Add both handlers to the logger
+logger.addHandler(stdout_handler)
 
 '''
 **********************************************
@@ -152,7 +199,7 @@ def one_bit(x, input_compress_settings={}):
     return compressed_x
 
 
-def top_k(x, k):
+def top_k(x, k_ratio):
 
     try:
         # print("spars: ", type(x))
@@ -165,11 +212,11 @@ def top_k(x, k):
         vec_x = x.flatten()
         d = int(len(vec_x))
         # print(d)
-        k = int(np.ceil(d * k))
+        k_index = int(np.ceil(d * k_ratio))
         # print(k)
-        indices = torch.abs(vec_x).topk(k)[1]
+        indexes = torch.abs(vec_x).topk(k_index)[1]
         out_x = torch.zeros_like(vec_x)
-        out_x[indices] = vec_x[indices]
+        out_x[indexes] = vec_x[indexes]
         out_x = out_x.reshape(x.shape)
         # print(x.shape)
         out = out_x.numpy()
@@ -184,10 +231,7 @@ def top_k(x, k):
 def sparse_top_k(layer, k):
 
     try:
-        if layer.ndim == 1:
-            return layer, -1
-        else:
-            return top_k(layer, k)
+        return top_k(layer, k)
         # else:
         #     new_layer = []
         #     k_values = []
@@ -224,7 +268,10 @@ def sparse_crs_top_k(parameters, k):
             # parameters[i] = sparse_matrix(p)
             parameters[i] = p
             k_values.append(k_value)
-        return parameters, k_values
+        sparse = [sparse_matrix(i) for i in parameters]
+        size = sparse_bytes(sparse)
+
+        return parameters, sparse, k_values, size
     except Exception as e:
         print("sparse crs top k")
         print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
@@ -236,7 +283,7 @@ def sparse_matrix(layer):
         if layer.ndim == 1:
             return layer
         elif layer.ndim == 2:
-            return lil_array(layer)
+            return csr_matrix(layer)
         else:
             new_layer = []
             if layer.ndim == 3:

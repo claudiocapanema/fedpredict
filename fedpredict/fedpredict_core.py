@@ -556,9 +556,9 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
             global_model_parameters = [i.detach().cpu().numpy() for i in global_model_parameters.parameters()]
 
         if compression == "sparsification":
-            assert "k" in kwargs, "kwargs must contain 'k' key"
-            assert type(kwargs["k"]) == float, "kwargs['k'] must be of type float"
-            assert kwargs["k"] >= 0 and kwargs["k"] <= 1, "kwargs['k'] must be in range [0,1]"
+            assert "k_ratio" in kwargs, "kwargs must contain 'k' key"
+            assert type(kwargs["k_ratio"]) == float, "kwargs 'k_ratio' must be of type float"
+            assert kwargs["k_ratio"] >= 0 and kwargs["k_ratio"] <= 1, "kwargs 'k_ration' must be in range [0,1]"
 
         global_model_original_shape = [i.shape for i in global_model_parameters]
         client_evaluate_list_fedpredict = []
@@ -638,9 +638,9 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
                 continue
             elif compression == 'sparsification':
                 # Keep top k elements
-                k = kwargs["k"]
-                parameters_to_send, k_values = sparse_crs_top_k([np.abs(i) for i in global_model_parameters], k)
-                compressed_size += sum([i.nbytes for i in parameters_to_send])
+                k_ratio = kwargs["k_ratio"]
+                parameters_to_send, sparse, k_values, size = sparse_crs_top_k(global_model_parameters, k_ratio)
+                compressed_size += size
                 if fl_framework is None:
                     config['parameters'] = parameters_to_send
                     config['global_model_original_shape'] = global_model_original_shape
