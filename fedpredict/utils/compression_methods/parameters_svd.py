@@ -147,6 +147,14 @@ def inverse_parameter_svd_reading(arrays, model_shape):
         reconstructed_model = []
         # logger.info(f"arrays {len(arrays)} antes inverse: {len(model_shape)}")
 
+        flag = True
+        for i, j in zip(arrays, model_shape):
+            if i.shape != j:
+                flag = False
+        if flag:
+            logger.info("nao descomprimiu cliente")
+            return arrays
+
         for i in range(M):
             if i*3 + 2 < len(arrays):
                 layer_shape = model_shape[i]
