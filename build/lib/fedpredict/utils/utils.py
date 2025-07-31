@@ -413,16 +413,12 @@ def fedpredict_server(parameters, client_evaluate_list, fedpredict_clients_metri
         elif compression == 'fedkd':
             if fedkd is None:
                 parameters_to_send = parameters_to_send if parameters_to_send is not None else parameters
-                print("dentro 1: ", type(parameters_to_send[0]), len(parameters_to_send[0]))
-                parameters_to_send, layers_fraction = fedkd_compression(
-                    fedpredict_clients_metrics[str(client_id)]['round_of_last_fit'], layers_compression_range,
-                    num_rounds, client_id, server_round, len(M), parameters_to_send)
+                parameters_to_send = fedkd_compression(layers_compression_range, num_rounds, client_id, server_round, parameters_to_send)
                 fedkd = parameters_to_send
             else:
                 parameters_to_send = fedkd
             config['decompress'] = True
             config['M'] = M
-            config['layers_fraction'] = layers_fraction
             evaluate_ins = EvaluateIns(ndarrays_to_parameters(parameters_to_send), config)
             # print("Evaluate enviar: ", client_id, [i.shape for i in parameters_to_ndarrays(parameters_to_send)])
             # print("enviar referencia: ", len(parameters), len(parameters_to_ndarrays(parameters_to_send)))

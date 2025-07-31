@@ -618,8 +618,7 @@ def fedpredict_server(global_model_parameters: Union[List[np.array], torch.nn.Mo
             elif compression == 'fedkd':
                 if fedkd is None:
                     parameters_to_send = parameters_to_send if parameters_to_send is not None else global_model_parameters
-                    parameters_to_send, layers_fraction = fedkd_compression(lt, layers_compression_range, T, t, len(M),
-                                                                            parameters_to_send)
+                    parameters_to_send = fedkd_compression(layers_compression_range, T, t, parameters_to_send)
                     fedkd = parameters_to_send
                 else:
                     # Reuse compressed parameters
