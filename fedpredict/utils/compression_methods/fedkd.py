@@ -93,12 +93,11 @@ def fedkd_compression_core(parameters, energy):
 
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
 
-def fedkd_compression(lt, layers_compression_range, T, t, M, parameter):
+def fedkd_compression(layers_compression_range, T, t, parameter):
     try:
-        nt = t - lt
         layers_fraction = []
         n_components_list = []
-        for i in range(M):
+        for i in range(len(layers_compression_range)):
             # if i % 2 == 0:
             layer = parameter[i]
             if len(layer.shape) >= 2:
@@ -122,7 +121,7 @@ def fedkd_compression(lt, layers_compression_range, T, t, M, parameter):
         parameter = fedkd_compression_core(parameter, energy)
         parameter = [np.array(i) for i in parameter]
 
-        return parameter, layers_fraction
+        return parameter
     except Exception as e:
         logger.critical("Method: fedkd_compression")
         logger.critical("""Error on line {} {} {}""".format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))

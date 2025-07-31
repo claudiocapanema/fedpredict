@@ -24,7 +24,7 @@ else:
 from fedpredict.fedpredict_torch import fedpredict_client_torch, fedpredict_client_weight_predictions_torch
 from fedpredict.fedpredict_core import fedpredict_server, layerwise_similarity
 from fedpredict.utils.utils import fedpredict_layerwise_similarity
-from fedpredict.fedpredict_core import layer_compression_range
+from fedpredict.fedpredict_core import layer_compression_range, fedkd_compression
 
 __all__ = [
     "fedpredict_client_torch",
@@ -32,5 +32,6 @@ __all__ = [
     "fedpredict_client_weight_predictions_torch",
     "layerwise_similarity",
     "fedpredict_layerwise_similarity",
-    "layer_compression_range"
+    "layer_compression_range",
+    "fedkd_compression"
 ]
