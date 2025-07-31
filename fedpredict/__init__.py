@@ -21,7 +21,7 @@ except ImportError:
 else:
     _has_tf = True
 
-from fedpredict.fedpredict_torch import fedpredict_client_torch, fedpredict_client_weight_predictions_torch
+from fedpredict.fedpredict_torch import fedpredict_client_torch, fedpredict_client_weight_predictions_torch, decompress_global_parameters
 from fedpredict.fedpredict_core import fedpredict_server, layerwise_similarity
 from fedpredict.utils.utils import fedpredict_layerwise_similarity
 from fedpredict.fedpredict_core import layer_compression_range, fedkd_compression
@@ -33,5 +33,6 @@ __all__ = [
     "layerwise_similarity",
     "fedpredict_layerwise_similarity",
     "layer_compression_range",
-    "fedkd_compression"
+    "fedkd_compression",
+    "decompress_global_parameters"
 ]
