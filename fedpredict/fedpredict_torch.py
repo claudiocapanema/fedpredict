@@ -112,7 +112,7 @@ def fedpredict_client_weight_predictions_torch(output: torch.Tensor, t: int, cur
     try:
         if similarity != 1 and t > 10:
             if _has_torch:
-                output = torch.multiply(output, torch.from_numpy(current_proportion * (1 - similarity)))
+                output = torch.multiply(output, torch.from_numpy(current_proportion * (1 - similarity)).to(output.device))
             else:
                 raise ValueError("Framework 'torch' not found")
 
