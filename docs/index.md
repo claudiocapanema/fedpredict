@@ -13,6 +13,8 @@ This project has been developed through a collaboration between the **WISEMAP La
 
 Citations:
 
+**August 25, 2025** - [](https://ieeexplore.ieee.org/document/11096152), Cláudio G. S. Capanema; Fabrício A. Silva; Leandro A. Villas; Antonio A. F. Loureiro.
+
 **May 6, 2025** - [ClusterPredict: Enhancing Federated Clustering by Combining Global and Local Parameters](https://ieeexplore.ieee.org/abstract/document/10936811), Mingliang Ni and Chaochao Sun.
 
 **March 1, 2024** - [Adaptive client selection with personalization for communication efficient Federated Learning](https://www.sciencedirect.com/science/article/abs/pii/S1570870524000738), Allan M. de Souza, Filipe Maciel, Joahannes B.D. da Costa, Luiz F. Bittencourt, Eduardo Cerqueira, Antonio A.F. Loureiro, and Leandro A. Villas.
