@@ -9,11 +9,12 @@ As a modular component, FedPredict operates exclusively during the prediction ph
 
 This project has been developed through a collaboration between the **WISEMAP Lab (UFMG)**, **H.IAAC Lab (UNICAMP)**, and **NESPED Lab (UFV)**.
 
+
 ## News
 
 Citations:
 
-**August 25, 2025** - [](https://ieeexplore.ieee.org/document/11096152), Cláudio G. S. Capanema; Fabrício A. Silva; Leandro A. Villas; Antonio A. F. Loureiro.
+**August 25, 2025** - [Data Shift Under Delayed Labeling in Multi-Model Federated Learning](https://ieeexplore.ieee.org/document/11096152), Cláudio G. S. Capanema; Fabrício A. Silva; Leandro A. Villas; Antonio A. F. Loureiro.
 
 **May 6, 2025** - [ClusterPredict: Enhancing Federated Clustering by Combining Global and Local Parameters](https://ieeexplore.ieee.org/abstract/document/10936811), Mingliang Ni and Chaochao Sun.
 
