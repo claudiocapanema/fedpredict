@@ -7,10 +7,11 @@ At the client-side, after receiving the global model parameters in the predictio
 ```python
     from fedpredict import fedpredict_client_torch
 
+    """Client evaluation"""
+    
     t = 50 # current round
     T = 100 # total number of rounds
     nt = 3 # number of rounds since the last time the current client trained
-    M = len(global_model) # the number of layers shared by the server
     
     # apply fedpredict
     combinel_model = fedpredict_client_torch(local_model=local_model, 
