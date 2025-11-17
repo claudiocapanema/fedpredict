@@ -178,7 +178,7 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
                 Example:
                     il = {'global': 0.5, 'reference': 0.5}
             dh: dict[str,float], optional. Default=None.
-                The degree of data homogeneity that generated the global model.
+                The degree of data heterogeneity (changed from "data homogeneity" to "data heterogeneity" that generated the global model.
                 Example:
                     dh = {'global': 0.5, 'reference': 0.5}
             ps: dict[str,float], optional. Default=None.
