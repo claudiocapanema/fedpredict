@@ -135,6 +135,7 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
                             ps: dict[str,float]=None,
                             knowledge_distillation:bool=False,
                             global_model_original_shape: list[tuple]=None,
+                            return_gw_lw: bool=False,
                             logs: bool=False
                             )-> torch.nn.Module:
     """
@@ -190,6 +191,8 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
                 to be combined with the student model
             global_model_original_shape: list[tuple]
                 The original shape of the global model (without compression). Used when compŕession is applied by ``fedpredict_server``.
+            return_gw_lw: bool, optional. Default=False
+                Return 'gw' and 'lw' weights
             logs: bool, optional. Default=False
                 Whether or not to log the results of the combination process.
 
@@ -259,7 +262,7 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
         if logs:
             logger.info(f"Using {version}")
 
-        combined_local_model = fedpredict_client_versions_torch(local_model=local_model,
+        combined_local_model, lw, gw = fedpredict_client_versions_torch(local_model=local_model,
                                                                 global_model=global_model,
                                                                 t=t,
                                                                 T=T,
@@ -272,7 +275,10 @@ def fedpredict_client_torch(local_model: torch.nn.Module,
                                                                 knowledge_distillation=knowledge_distillation,
                                                                 logs=logs)
 
-        return combined_local_model.to(device)
+        if return_gw_lw:
+            return combined_local_model.to(device), gw, lw
+        else:
+            return combined_local_model.to(device)
 
     except Exception as e:
         logger.critical("Method: fedpredict_client_torch")
@@ -302,10 +308,10 @@ def fedpredict_client_versions_torch(local_model: torch.nn.Module,
         #     raise Exception("""Lenght of parameters of the global model is {} and is different from the M {}""".format(
         #         number_of_layers_global_model, number_of_layers_local_model))
 
-        local_model = fedpredict_dynamic_combine_models(global_model, local_model, t, T, nt, M_global,
+        local_model, lw, gw = fedpredict_dynamic_combine_models(global_model, local_model, t, T, nt, M_global,
                                                         s, fc, il, dh, ps, logs)
 
-        return local_model
+        return local_model, lw, gw
 
     except Exception as e:
         logger.critical("Method: fedpredict_client_versions_torch")
@@ -361,19 +367,19 @@ def decompress_global_parameters(compressed_global_model_parameters: List[NDArra
 def fedpredict_dynamic_combine_models(global_parameters, model, t, T, nt, M, s, fc, il, dh, ps, logs=False):
     try:
 
-        local_model_weights, global_model_weight = fedpredict_dynamic_core(t, T, nt, s, fc, il, dh, ps, logs)
+        lw, gw = fedpredict_dynamic_core(t, T, nt, s, fc, il, dh, ps, logs)
         count = 0
         # logger.info(f"m: {M} layers {len([i for i in model.parameters()])}")
         for new_param, old_param in zip(global_parameters.parameters(), model.parameters()):
             if count in M:
                 if new_param.shape == old_param.shape:
                     old_param.data = (
-                            global_model_weight * new_param.data.clone() + local_model_weights * old_param.data.clone())
+                            gw * new_param.data.clone() + lw * old_param.data.clone())
                 else:
                     raise ValueError(f"Layer {count} has different shapes: global model {new_param.shape} and local model {old_param.shape}")
             count += 1
 
-        return model
+        return model, lw, gw
 
     except Exception as e:
         logger.critical("Method: fedpredict_dynamic_combine_models")
