@@ -56,7 +56,7 @@ strategy = "FedAvg+FP" # Possible values: {"FedAvg+FP", "FedAvg"} for comparison
 # [tool.flwr.federations.local-simulation]
 # options.num-supernodes = 20
 
-# [tool.flwr.federations.local-simulation-gpu]
-# options.num-supernodes = 20
-# options.backend.client-resources.num-cpus = 1 # each ClientApp assumes to use 1 CPU
-# options.backend.client-resources.num-gpus = 1 #
+[superlink.local-custom-resources]
+options.num-supernodes = 20
+options.backend.client-resources.num-cpus = 1
+options.backend.client-resources.num-gpus = 0.1
