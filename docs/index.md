@@ -7,12 +7,14 @@ It enables personalization in standard algorithms such as FedAvg and FedYogi, bo
 
 As a modular component, FedPredict operates exclusively during the prediction phase of FL and does not require any modifications to the training process.
 
-This project has been developed through a collaboration between the **WISEMAP Lab (UFMG)**, **H.IAAC Lab (UNICAMP)**, and **NESPED Lab (UFV)**.
+This project has been developed through a collaboration between the **WISEMAP Lab (UFMG)**, **H.IAAC Lab (UNICAMP)**, and **NESPED Lab (UFV)**, both in Brazil.
 
 
 ## News
 
 Citations:
+
+**20 January 2026** - [Leveraging Federated Learning for Multilingual and Private Language Models via Model Clustering](https://ieeexplore.ieee.org/document/11336764), G. U. Talasso, A. M. de Souza, L. F. G. Gonzalez, E. Cerqueira, A. A. F. Loureiro and L. A. Villas.
 
 **August 25, 2025** - [Data Shift Under Delayed Labeling in Multi-Model Federated Learning](https://ieeexplore.ieee.org/document/11096152), Cláudio G. S. Capanema; Fabrício A. Silva; Leandro A. Villas; Antonio A. F. Loureiro.
 
