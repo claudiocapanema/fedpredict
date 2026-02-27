@@ -321,6 +321,9 @@ def fedpredict_dynamic_core(t, T, nt, s=1, fc=None, il=None, dh=None, ps=None, l
                 "reference"]) and (nt > 0 and ps["global"] > ps["reference"]):
                 global_model_weight = 1
 
+                logger.info("usou")
+                raise Exception(f"usou: {fc} {il} {dh} {ps}")
+
         local_model_weights = 1 - global_model_weight
 
         if logs:
