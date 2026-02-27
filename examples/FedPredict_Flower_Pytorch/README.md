@@ -92,7 +92,7 @@ flwr run . local-simulation-gpu
 ### Seeing FedPredict improvements
 
 To really see FedPredict improvements, run FedAvg with and without FedPredict.
-Please vary the value of ``alpha`` to test different non-IID scenarios (e.g., alpha in {0.1, 1.0}).
+Please vary the value of ``alpha`` to test different non-IID scenarios (e.g., alpha in {0.1, 1.0, 10}).
 
 FedAvg:
 ```bash
@@ -100,7 +100,7 @@ FedAvg:
 ```
 FedAvg with FedPredict (FP):
 ```bash
- flwr run . local-simulation-gpu --run-config "num-server-rounds=100 alpha=1.0 strategy='FedAvg+FP'" 
+ flwr run . local-simulation-gpu --run-config "num-server-rounds=100 alpha=0.1 strategy='FedAvg+FP'" 
 ```
 
 ### Run with the Deployment Engine
