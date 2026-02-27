@@ -45,7 +45,7 @@ def server_fn(context: Context):
 
         # Define the strategy
         strategy = FedAvg(
-            fraction_fit=0.3,
+            fraction_fit=context.run_config["fraction-fit"],
             fraction_evaluate=context.run_config["fraction-evaluate"],
             min_available_clients=2,
             on_fit_config_fn=on_fit_config_fn,
