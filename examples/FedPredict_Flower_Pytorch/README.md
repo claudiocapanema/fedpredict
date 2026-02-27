@@ -89,6 +89,20 @@ flwr run . local-simulation-gpu
 > \[!TIP\]
 > For a more detailed walk-through check our [quickstart PyTorch tutorial](https://flower.ai/docs/framework/tutorial-quickstart-pytorch.html)
 
+### Seeing FedPredict improvements
+
+To really see FedPredict improvements, run FedAvg with and without FedPredict.
+Please vary the value of ``alpha`` to test different non-IID scenarios (e.g., alpha in {0.1, 1.0}).
+
+FedAvg:
+```bash
+ flwr run . local-simulation-gpu --run-config "num-server-rounds=100 alpha=0.1 strategy='FedAvg'" 
+```
+FedAvg with FedPredict (FP):
+```bash
+ flwr run . local-simulation-gpu --run-config "num-server-rounds=100 alpha=1.0 strategy='FedAvg+FP'" 
+```
+
 ### Run with the Deployment Engine
 
 Follow this [how-to guide](https://flower.ai/docs/framework/how-to-run-flower-with-deployment-engine.html) to run the same app in this example but with Flower's Deployment Engine. After that, you might be intersted in setting up [secure TLS-enabled communications](https://flower.ai/docs/framework/how-to-enable-tls-connections.html) and [SuperNode authentication](https://flower.ai/docs/framework/how-to-authenticate-supernodes.html) in your federation.
