@@ -1,0 +1,83 @@
+#splash-screen {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at center, #071426 0%, #000 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  animation: fadeIn 0.5s ease;
+}
+
+.splash-content {
+  text-align: center;
+  width: 90%;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.logo {
+  font-size: clamp(2rem, 6vw, 4rem);
+  margin-bottom: 40px;
+  background: linear-gradient(90deg, #00c6ff, #0072ff, #9b00ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: 2px;
+  white-space: nowrap;
+}
+
+.loader {
+  width: 100%;
+  height: 4px;
+  background: rgba(255,255,255,0.1);
+  overflow: hidden;
+  border-radius: 2px;
+}
+
+.progress {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #00c6ff, #0072ff);
+  animation: loading 3.5s ease forwards;
+}
+
+.fade-out {
+  opacity: 0;
+  transition: opacity 0.8s ease;
+}
+
+@keyframes loading {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Remove fundo global do Material */
+
+[data-md-color-scheme] {
+  background-color: transparent !important;
+}
+
+/* Remove fundo do container principal */
+.md-main {
+  background-color: transparent !important;
+}
+
+/* Remove fundo do article */
+.md-content__inner {
+  background: transparent !important;
+}
+
+/* Remove sombra que cria efeito de cartão branco */
+.md-content__inner {
+  box-shadow: none !important;
+}
+
+/* Força o body transparente */
+body {
+  background: transparent !important;
+}
